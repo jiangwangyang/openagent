@@ -1,5 +1,6 @@
 import logging
 import pathlib
+from contextlib import asynccontextmanager
 
 from apscheduler import AsyncScheduler
 from apscheduler.datastores.sqlalchemy import SQLAlchemyDataStore
@@ -14,6 +15,13 @@ pathlib.Path(DATABASE_FILE).parent.mkdir(parents=True, exist_ok=True)
 async_engine = create_async_engine(DATABASE_URL)
 data_store = SQLAlchemyDataStore(async_engine)
 async_scheduler = AsyncScheduler(data_store)
+
+
+@asynccontextmanager
+async def lifespan():
+    async with async_scheduler:
+        await async_scheduler.start_in_background()
+        yield
 
 
 async def _execute_task(name: str, query: str, work_dir: str):

@@ -17,10 +17,10 @@ async def list_directory(path: str = Query(...)):
     # 只列出目录
     directories = [{
         "name": child_path.name,
-        "path": str(await child_path.absolute())
+        "path": str(await child_path.resolve())
     } async for child_path in target_path.iterdir() if await child_path.is_dir()]
     return {
-        "current_path": str(await target_path.absolute()),
-        "parent_path": str(await target_path.parent.absolute()),
+        "current_path": str(await target_path.resolve()),
+        "parent_path": str(await target_path.parent.resolve()),
         "directories": sorted(directories, key=lambda x: x["name"])
     }

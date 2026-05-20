@@ -11,18 +11,20 @@ from open_agent.api.path_api import router as path_router
 from open_agent.api.schedule_api import router as schedule_router
 from open_agent.repository import database
 from open_agent.service import schedule_service
+from open_agent.tool import mcpcli_tool, skill_tool
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 数据库/调度器 生命周期管理
-    await database.init_database()
-    async with schedule_service.async_scheduler:
-        await schedule_service.async_scheduler.start_in_background()
-        yield
-    await database.async_engine.dispose()
+    # 初始化技能
+    await skill_tool.init_skills()
+    # 数据库/调度器/mcp 生命周期管理
+    async with database.lifespan():
+        async with schedule_service.lifespan():
+            async with mcpcli_tool.lifespan():
+                yield
 
 
 app: FastAPI = FastAPI(lifespan=lifespan)

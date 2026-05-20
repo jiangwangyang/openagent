@@ -12,7 +12,11 @@ SETTINGS_FILE = str(pathlib.Path.home() / ".openagent" / "settings.json")
 
 
 async def agent(conversation_id: int, query: str, work_dir: str):
-    system_prompt = await (anyio.Path(work_dir) / "AGENTS.md").read_text(encoding="utf-8") if await (anyio.Path(work_dir) / "AGENTS.md").exists() else ""
+    system_prompt = ""
+    for agents_file in [anyio.Path(work_dir) / "AGENTS.md", await anyio.Path.home() / ".openagent" / "AGENTS.md", await anyio.Path.home() / ".agents" / "AGENTS.md"]:
+        if await agents_file.exists() and await agents_file.is_file():
+            system_prompt = await agents_file.read_text(encoding="utf-8")
+            break
     tools = tool_service.get_anthropic_tools()
     messages = []
     if conversation_id:

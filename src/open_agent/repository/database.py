@@ -1,4 +1,5 @@
 import pathlib
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import List
 
@@ -11,7 +12,17 @@ from sqlalchemy.orm import declarative_base
 DATABASE_FILE = str(pathlib.Path.home() / ".openagent" / "database.db")
 DATABASE_URL = f"sqlite+aiosqlite:///{DATABASE_FILE}"
 pathlib.Path(DATABASE_FILE).parent.mkdir(parents=True, exist_ok=True)
+async_engine = create_async_engine(DATABASE_URL)
+async_session = async_sessionmaker(async_engine, expire_on_commit=False)
 Base = declarative_base()
+
+
+@asynccontextmanager
+async def lifespan():
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all, checkfirst=True)
+    yield
+    await async_engine.dispose()
 
 
 # 开启 SQLite 的外键约束支持
@@ -69,15 +80,3 @@ class MessageEntity(Base):
 # 定义索引
 Index("idx_exchange_conversation", ExchangeEntity.conversation_id)
 Index("idx_message_conversation", MessageEntity.conversation_id)
-
-# 1. 创建异步引擎
-async_engine = create_async_engine(DATABASE_URL)
-
-# 2. 创建异步会话工厂
-async_session = async_sessionmaker(async_engine, expire_on_commit=False)
-
-
-# 初始化数据库
-async def init_database():
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all, checkfirst=True)
