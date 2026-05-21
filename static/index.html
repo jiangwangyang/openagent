@@ -333,7 +333,7 @@
             align-self: flex-end;
             max-width: 70%;
             background: var(--charcoal-900);
-            color: var(--bg-panel);
+            color: var(--bg-canvas);
             padding: 16px 20px;
             border-radius: var(--radius-sm);
             font-size: 15px;
@@ -919,7 +919,7 @@
             border: 1px solid var(--charcoal-900);
             box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.05);
             border-radius: 0;
-            margin: 10vh auto;
+            margin: auto;
             display: flex;
             flex-direction: column;
             animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1100,7 +1100,7 @@
 
     <!-- 视图 1: 智能会话区域 -->
     <div class="view-container active" id="viewDialog">
-        <div class="chat-container" id="chatContainer" style="padding:0; flex:1;">
+        <div class="chat-container" id="chatContainer" style="padding:0; flex:1; display:flex; flex-direction:column;">
             <div class="empty-state" id="emptyState">
                 <div class="empty-state-icon"><span>✦</span></div>
                 <div class="empty-state-title">Initialize Process</div>
@@ -1220,7 +1220,6 @@
         <div id="configFormContainer" style="display: flex; flex-direction: column; gap: 24px;">
             <!-- 骨干路由单元：核心模型路由 -->
             <div class="config-section-card">
-                <!-- 优化调整：标题与保存按钮同一行，按钮放右上角 -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <h3 class="panel-view-title" style="font-size: 14px; margin-bottom: 0;">Active Context Route</h3>
                     <button class="btn btn-sm send-button" style="height: 32px;" onclick="saveActiveModelRoute()">Save Routing Choice</button>
@@ -1373,6 +1372,42 @@
         return escapeHtml(text).replaceAll("\n", "<br>");
     }
 
+    // ----- 核心组件：通用确认弹窗引擎 -----
+    function showConfirmDialog({title, text, onConfirm}) {
+        closeConfirmDialog(); // 安全清理已有弹窗
+
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.style.display = 'flex';
+        overlay.innerHTML = `
+            <div class="confirm-dialog">
+                <div class="confirm-title">${escapeHtml(title)}</div>
+                <div class="confirm-text">${escapeHtml(text)}</div>
+                <div class="confirm-buttons">
+                    <button class="confirm-btn cancel" onclick="closeConfirmDialog()">Abort</button>
+                    <button class="confirm-btn danger" id="globalConfirmExecuteBtn">Purge</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        // 绑定确认执行回调
+        document.getElementById('globalConfirmExecuteBtn').onclick = () => {
+            if (typeof onConfirm === 'function') onConfirm();
+            closeConfirmDialog();
+        };
+
+        // 点击遮罩层关闭
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeConfirmDialog();
+        });
+    }
+
+    function closeConfirmDialog() {
+        const overlay = document.querySelector('.confirm-overlay');
+        if (overlay) overlay.remove();
+    }
+
     // ----- 核心架构：视图导航引擎 -----
     function switchView(viewName) {
         document.querySelectorAll('.header-nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -1432,7 +1467,7 @@
                             <span class="info-card-name">${escapeHtml(task.name || 'Unnamed Task')}</span>
                             <span class="info-card-snippet">${escapeHtml(task.content || '')}</span>
                         </div>
-                        <button class="delete-btn" style="opacity:1;" onclick="event.stopPropagation(); removeCronTask('${task.id}')">
+                        <button class="delete-btn" style="opacity:1;" onclick="event.stopPropagation(); removeCronTask('${task.id}', '${escapeHtml(task.name)}')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
                     </div>
@@ -1497,14 +1532,19 @@
         }
     }
 
-    async function removeCronTask(taskId) {
-        if (!confirm("PURGE THIS CRON PIPELINE?")) return;
-        try {
-            const response = await fetch(`/schedule/${taskId}`, {method: 'DELETE'});
-            if (response.ok) fetchCronTasks();
-        } catch (e) {
-            alert("PURGE FAILED");
-        }
+    function removeCronTask(taskId, taskName) {
+        showConfirmDialog({
+            title: "PURGE CRON PIPELINE",
+            text: `Are you sure you want to destroy scheduled process [${taskName}]? This pipeline sequence will be wiped out from kernel queue.`,
+            onConfirm: async () => {
+                try {
+                    const response = await fetch(`/schedule/${taskId}`, {method: 'DELETE'});
+                    if (response.ok) fetchCronTasks();
+                } catch (e) {
+                    alert("PURGE FAILED");
+                }
+            }
+        });
     }
 
     // ----- SKILLS 引擎 -----
@@ -1551,7 +1591,7 @@
         }
     }
 
-    // ----- MCP 模块层（对接 /setting/mcp/* 细粒度控制接口） -----
+    // ----- MCP 模块层 -----
     function toggleAddMcpPanel() {
         addMcpPanel.style.display = addMcpPanel.style.display === 'none' ? 'flex' : 'none';
     }
@@ -1724,14 +1764,19 @@
         }
     }
 
-    async function removeMcpServer(name) {
-        if (!confirm(`ARE YOU SURE YOU WANT TO PURGE MCP SERVER: [${name}]?`)) return;
-        try {
-            const response = await fetch(`/setting/mcp/${encodeURIComponent(name)}`, {method: 'DELETE'});
-            if (response.ok) fetchMcpRegistry();
-        } catch (e) {
-            alert("PURGE FAILURE");
-        }
+    function removeMcpServer(name) {
+        showConfirmDialog({
+            title: "PURGE MCP NODE",
+            text: `Are you sure you want to completely eject MCP node [${name}] from system environment? Bridge tunnels attached will be disconnected instantly.`,
+            onConfirm: async () => {
+                try {
+                    const response = await fetch(`/setting/mcp/${encodeURIComponent(name)}`, {method: 'DELETE'});
+                    if (response.ok) fetchMcpRegistry();
+                } catch (e) {
+                    alert("PURGE FAILURE");
+                }
+            }
+        });
     }
 
     async function testMcpServerTools(name) {
@@ -1772,7 +1817,7 @@
         }
     }
 
-    // ----- CONFIG 全局生产环境配置（对接 /setting/model/* 细粒度核心接口） -----
+    // ----- CONFIG 全局控制台引擎 -----
     function toggleAddProviderPanel() {
         addProviderPanel.style.display = addProviderPanel.style.display === 'none' ? 'flex' : 'none';
     }
@@ -1782,15 +1827,12 @@
         providerList.innerHTML = '<div style="padding:20px; text-align:center; font-family:var(--font-mono); color:var(--slate-400)">LOADING CONFIGURATION IMAGES...</div>';
 
         try {
-            // 1. 获取所有模型供应方列表
             const pResponse = await fetch('/setting/model/provider/list');
             globalProvidersCachedList = await pResponse.json();
 
-            // 2. 获取当前激活的模型和提供方选择路由
             const sResponse = await fetch('/setting/model/select');
             const selectRoute = await sResponse.json();
 
-            // 3. 构建核心路由下拉列表项
             const activeProviderSelect = document.getElementById('configActiveProvider');
             activeProviderSelect.innerHTML = '';
 
@@ -1802,10 +1844,7 @@
                 activeProviderSelect.appendChild(opt);
             });
 
-            // 联动填充选中的具体模型
             syncModelDropdown(selectRoute.model);
-
-            // 4. 循环渲染独立提供方的配置卡片实体
             renderProvidersFormList();
 
         } catch (e) {
@@ -1939,7 +1978,6 @@
             });
             if (response.ok) {
                 alert(`PROVIDER CLUSTER [${name}] SYNCHRONIZED.`);
-                // 刷洗本地数据状态以更新可能调整的模型集群子集下拉项
                 const pResponse = await fetch('/setting/model/provider/list');
                 globalProvidersCachedList = await pResponse.json();
                 syncModelDropdown(document.getElementById('configActiveModel').value);
@@ -1949,14 +1987,19 @@
         }
     }
 
-    async function removeModelProvider(name) {
-        if (!confirm(`ARE YOU SURE YOU WANT TO PURGE MODEL PROVIDER: [${name}]?`)) return;
-        try {
-            const response = await fetch(`/setting/model/provider/${encodeURIComponent(name)}`, {method: 'DELETE'});
-            if (response.ok) fetchGlobalSettings();
-        } catch (e) {
-            alert("PURGE FAILURE");
-        }
+    function removeModelProvider(name) {
+        showConfirmDialog({
+            title: "PURGE MODEL PROVIDER",
+            text: `Are you sure you want to completely remove infrastructure cluster [${name}]? Layer dependencies pointing here will collapse.`,
+            onConfirm: async () => {
+                try {
+                    const response = await fetch(`/setting/model/provider/${encodeURIComponent(name)}`, {method: 'DELETE'});
+                    if (response.ok) fetchGlobalSettings();
+                } catch (e) {
+                    alert("PURGE FAILURE");
+                }
+            }
+        });
     }
 
     async function saveActiveModelRoute() {
@@ -1998,7 +2041,7 @@
         }
     }
 
-    // ----- 底层通用会话网络沙箱与状态处理 -----
+    // ----- 通用会话网络与状态处理 -----
     async function loadDirList(path) {
         const dirListContainer = document.getElementById('dirList');
         const pathDisplay = document.getElementById('currentPathDisplay');
@@ -2080,7 +2123,7 @@
                 item.innerHTML = `
                     <span class="conversation-item-icon">▪</span>
                     <span class="conversation-item-text">${conversation.title}</span>
-                    <button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteConversation('${conversation.id}')">
+                    <button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteConversation('${conversation.id}', '${escapeHtml(conversation.title)}')">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 `;
@@ -2155,47 +2198,20 @@
         return mergedMessages;
     }
 
-    async function deleteConversation(conversationId) {
-        closeConfirmDialog();
-        try {
-            await fetch(`/conversation/${conversationId}`, {method: 'DELETE'});
-            if (String(currentConversationId) === String(conversationId)) startNewChat();
-            await loadConversationList();
-        } catch (e) {
-        }
-    }
-
-    function confirmDeleteConversation(conversationId) {
-        const overlay = document.createElement('div');
-        overlay.className = 'confirm-overlay';
-        overlay.style.display = 'flex';
-        overlay.innerHTML = `
-            <div class="confirm-dialog">
-                <div class="confirm-title">PURGE RECORD</div>
-                <div class="confirm-text">Are you sure you want to delete this conversation? This action is irreversible.</div>
-                <div class="confirm-buttons">
-                    <button class="confirm-btn cancel" onclick="closeConfirmDialog()">Abort</button>
-                    <button class="confirm-btn danger" onclick="deleteConversation('${conversationId}')">Purge</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeConfirmDialog();
+    function confirmDeleteConversation(conversationId, convTitle) {
+        showConfirmDialog({
+            title: "PURGE RECORD",
+            text: `Are you sure you want to delete conversation [${convTitle}]? This trace log action is irreversible.`,
+            onConfirm: async () => {
+                try {
+                    await fetch(`/conversation/${conversationId}`, {method: 'DELETE'});
+                    if (String(currentConversationId) === String(conversationId)) startNewChat();
+                    await loadConversationList();
+                } catch (e) {
+                }
+            }
         });
     }
-
-    function closeConfirmDialog() {
-        const overlay = document.querySelector('.confirm-overlay');
-        if (overlay) overlay.remove();
-    }
-
-    // 强对齐卡片布局辅助补丁样式
-    const stylePatch = document.createElement('style');
-    stylePatch.innerHTML = `
-        .info-card-summary { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-    `;
-    document.head.appendChild(stylePatch);
 
     function startNewChat() {
         currentConversationId = null;
