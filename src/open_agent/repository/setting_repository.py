@@ -18,7 +18,6 @@ async def init_settings():
     # 增加 DeepSeek
     if "deepseek" not in model_providers and os.getenv("DEEPSEEK_API_KEY", ""):
         model_providers["deepseek"] = {
-            "name": "DeepSeek",
             "base_url": "https://api.deepseek.com/anthropic",
             "api_key": os.getenv("DEEPSEEK_API_KEY", ""),
             "models": [
@@ -29,7 +28,6 @@ async def init_settings():
     # 增加 MiniMax
     if "minimax" not in model_providers and os.getenv("MINIMAX_API_KEY", ""):
         model_providers["minimax"] = {
-            "name": "MiniMax",
             "base_url": "https://api.minimax.chat/anthropic",
             "api_key": os.getenv("MINIMAX_API_KEY", ""),
             "models": [

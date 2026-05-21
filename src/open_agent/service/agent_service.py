@@ -1,14 +1,12 @@
 import json
-import pathlib
 
 import anyio
 from anthropic import AsyncAnthropic, AsyncStream
 from anthropic.types.raw_message_stream_event import RawMessageStreamEvent
 
 from open_agent.repository import conversation_repository
+from open_agent.repository import setting_repository
 from open_agent.service import tool_service
-
-SETTINGS_FILE = str(pathlib.Path.home() / ".openagent" / "settings.json")
 
 
 async def agent(conversation_id: int, query: str, work_dir: str):
@@ -25,12 +23,10 @@ async def agent(conversation_id: int, query: str, work_dir: str):
     messages += [{"role": "user", "content": query}]
 
     # 初始化客户端
-    settings_file = anyio.Path(SETTINGS_FILE)
-    settings_file_content = await settings_file.read_text(encoding="utf-8") if await settings_file.exists() else ""
-    settings = json.loads(settings_file_content) if settings_file_content else {}
+    settings = await setting_repository.get_settings()
     model, model_provider = settings.get("model", ""), settings.get("model_provider", "")
     model_provider_dict = settings.get("model_providers", {}).get(model_provider, {})
-    api, base_url, api_key = model_provider_dict.get("api", "anthropic"), model_provider_dict.get("base_url", ""), model_provider_dict.get("api_key", "")
+    base_url, api_key = model_provider_dict.get("base_url", ""), model_provider_dict.get("api_key", "")
     anthropic_client: AsyncAnthropic = AsyncAnthropic(base_url=base_url, api_key=api_key)
 
     while True:

@@ -2,15 +2,15 @@ import argparse
 import io
 import json
 import logging
-import pathlib
 from contextlib import asynccontextmanager, AsyncExitStack
 from contextlib import redirect_stdout, redirect_stderr
 
-import anyio
 from mcp import ClientSession, StdioServerParameters, Tool
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
+
+from open_agent.repository import setting_repository
 
 EXAMPLE = """
 # 列出服务
@@ -39,7 +39,6 @@ MCPCLI_TOOL = {
         "required": []
     }
 }
-SETTINGS_FILE = str(pathlib.Path.home() / ".openagent" / "settings.json")
 # {servername: (serverdescription, {toolname: (session, tool)})}
 SERVER_TOOL_DICT: dict[str, tuple[str, dict[str, tuple[ClientSession, Tool]]]] = {}
 
@@ -49,7 +48,7 @@ def get_anthropic_tools() -> list[dict]:
 
 
 @asynccontextmanager
-async def _register_mcp_client(name, description, proto_type, **kwargs):
+async def _register_mcp_client(name: str, description: str, proto_type: str, **kwargs):
     async with AsyncExitStack() as stack:
         # 创建客户端
         if proto_type == "streamable_http":
@@ -76,9 +75,7 @@ async def _register_mcp_client(name, description, proto_type, **kwargs):
 
 @asynccontextmanager
 async def lifespan():
-    settings_file = anyio.Path(SETTINGS_FILE)
-    settings_file_content = await settings_file.read_text(encoding="utf-8") if await settings_file.exists() else ""
-    settings = json.loads(settings_file_content) if settings_file_content else {}
+    settings = await setting_repository.get_settings()
     mcp_servers = settings.get("mcp_servers", {})
     async with AsyncExitStack() as stack:
         for name, server in mcp_servers.items():

@@ -1,20 +1,14 @@
 import logging
-import pathlib
 from contextlib import asynccontextmanager
 
 from apscheduler import AsyncScheduler
 from apscheduler.datastores.sqlalchemy import SQLAlchemyDataStore
 from apscheduler.triggers.cron import CronTrigger
-from sqlalchemy.ext.asyncio import create_async_engine
 
+from open_agent.repository import database
 from open_agent.service import agent_service
 
-DATABASE_FILE = str(pathlib.Path.home() / ".openagent" / "scheduler.db")
-DATABASE_URL = f"sqlite+aiosqlite:///{DATABASE_FILE}"
-pathlib.Path(DATABASE_FILE).parent.mkdir(parents=True, exist_ok=True)
-async_engine = create_async_engine(DATABASE_URL)
-data_store = SQLAlchemyDataStore(async_engine)
-async_scheduler = AsyncScheduler(data_store)
+async_scheduler = AsyncScheduler(SQLAlchemyDataStore(database.async_engine))
 
 
 @asynccontextmanager

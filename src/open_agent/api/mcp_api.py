@@ -6,7 +6,7 @@ from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
 
-from open_agent.service import setting_service
+from open_agent.repository import setting_repository
 
 router = APIRouter()
 
@@ -32,7 +32,7 @@ async def list_mcp_tool(body: dict):
 
 @router.get("/list")
 async def list_mcp():
-    settings = await setting_service.get_settings()
+    settings = await setting_repository.get_settings()
     mcp_servers = settings.get("mcp_servers", {})
     return [{
         "name": k,
@@ -46,16 +46,16 @@ async def list_mcp():
 
 @router.post("/{name}")
 async def update_mcp(name: str, body: dict):
-    settings = await setting_service.get_settings()
+    settings = await setting_repository.get_settings()
     if not "mcp_servers" in settings:
         settings["mcp_servers"] = {}
     settings["mcp_servers"][name] = body
-    await setting_service.save_settings(settings)
+    await setting_repository.save_settings(settings)
 
 
 @router.delete("/{name}")
 async def delete_mcp(name: str):
-    settings = await setting_service.get_settings()
+    settings = await setting_repository.get_settings()
     if "mcp_servers" in settings and name in settings["mcp_servers"]:
         del settings["mcp_servers"][name]
-        await setting_service.save_settings(settings)
+        await setting_repository.save_settings(settings)
