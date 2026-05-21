@@ -1653,7 +1653,7 @@ HTML = """
     async function fetchMcpRegistry() {
         mcpListContainer.innerHTML = '<div style="padding:20px; text-align:center; font-family:var(--font-mono); color:var(--slate-400)">RESOLVING MCP SERVER TOPOLOGY...</div>';
         try {
-            const response = await fetch('/setting/mcp/list');
+            const response = await fetch('/mcp/list');
             globalMcpCachedList = await response.json();
             mcpListContainer.innerHTML = '';
 
@@ -1755,7 +1755,7 @@ HTML = """
         }
 
         try {
-            const response = await fetch(`/setting/mcp/${encodeURIComponent(name)}`, {
+            const response = await fetch(`/mcp/${encodeURIComponent(name)}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(bodyPayload)
@@ -1798,7 +1798,7 @@ HTML = """
         }
 
         try {
-            const response = await fetch(`/setting/mcp/${encodeURIComponent(name)}`, {
+            const response = await fetch(`/mcp/${encodeURIComponent(name)}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(bodyPayload)
@@ -1818,7 +1818,7 @@ HTML = """
             text: `Are you sure you want to completely eject MCP node [${name}] from system environment? Bridge tunnels attached will be disconnected instantly.`,
             onConfirm: async () => {
                 try {
-                    const response = await fetch(`/setting/mcp/${encodeURIComponent(name)}`, {method: 'DELETE'});
+                    const response = await fetch(`/mcp/${encodeURIComponent(name)}`, {method: 'DELETE'});
                     if (response.ok) fetchMcpRegistry();
                 } catch (e) {
                     alert("PURGE FAILURE");
@@ -1840,7 +1840,7 @@ HTML = """
         listContainer.innerHTML = '<div style="font-family:var(--font-mono); font-size:12px; color:var(--slate-400)">CONNECTING & INITIALIZING CLIENT SESSION...</div>';
 
         try {
-            const response = await fetch('/setting/mcp/tool/list', {
+            const response = await fetch('/mcp/tool/list', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(targetServer)
@@ -1877,10 +1877,10 @@ HTML = """
         providerList.innerHTML = '<div style="padding:20px; text-align:center; font-family:var(--font-mono); color:var(--slate-400)">LOADING CONFIGURATION IMAGES...</div>';
 
         try {
-            const pResponse = await fetch('/setting/model/provider/list');
+            const pResponse = await fetch('/model/provider/list');
             globalProvidersCachedList = await pResponse.json();
 
-            const sResponse = await fetch('/setting/model/select');
+            const sResponse = await fetch('/model/select');
             const selectRoute = await sResponse.json();
 
             const activeProviderSelect = document.getElementById('configActiveProvider');
@@ -1991,7 +1991,7 @@ HTML = """
         };
 
         try {
-            const response = await fetch(`/setting/model/provider/${encodeURIComponent(name)}`, {
+            const response = await fetch(`/model/provider/${encodeURIComponent(name)}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(bodyPayload)
@@ -2021,14 +2021,14 @@ HTML = """
         };
 
         try {
-            const response = await fetch(`/setting/model/provider/${encodeURIComponent(name)}`, {
+            const response = await fetch(`/model/provider/${encodeURIComponent(name)}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(bodyPayload)
             });
             if (response.ok) {
                 alert(`PROVIDER CLUSTER [${name}] SYNCHRONIZED.`);
-                const pResponse = await fetch('/setting/model/provider/list');
+                const pResponse = await fetch('/model/provider/list');
                 globalProvidersCachedList = await pResponse.json();
                 syncModelDropdown(document.getElementById('configActiveModel').value);
             }
@@ -2043,7 +2043,7 @@ HTML = """
             text: `Are you sure you want to completely remove infrastructure cluster [${name}]? Layer dependencies pointing here will collapse.`,
             onConfirm: async () => {
                 try {
-                    const response = await fetch(`/setting/model/provider/${encodeURIComponent(name)}`, {method: 'DELETE'});
+                    const response = await fetch(`/model/provider/${encodeURIComponent(name)}`, {method: 'DELETE'});
                     if (response.ok) fetchGlobalSettings();
                 } catch (e) {
                     alert("PURGE FAILURE");
@@ -2067,7 +2067,7 @@ HTML = """
         };
 
         try {
-            const response = await fetch('/setting/model/select', {
+            const response = await fetch('/model/select', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(bodyPayload)

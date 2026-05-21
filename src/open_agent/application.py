@@ -5,8 +5,9 @@ from fastapi import FastAPI
 
 from open_agent.api.agent_api import router as agent_router
 from open_agent.api.conversation_api import router as conversation_router
+from open_agent.api.mcp_api import router as mcp_router
+from open_agent.api.model_api import router as model_router
 from open_agent.api.schedule_api import router as schedule_router
-from open_agent.api.setting_api import router as setting_router
 from open_agent.api.skill_api import router as skill_router
 from open_agent.api.static_api import router as static_router
 from open_agent.repository import database
@@ -35,4 +36,5 @@ app.include_router(agent_router, prefix="/agent")
 app.include_router(conversation_router, prefix="/conversation")
 app.include_router(schedule_router, prefix="/schedule")
 app.include_router(skill_router, prefix="/skill")
-app.include_router(setting_router, prefix="/setting")
+app.include_router(mcp_router, prefix="/mcp")
+app.include_router(model_router, prefix="/model")
