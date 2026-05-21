@@ -1,14 +1,21 @@
-import os
-import pathlib
-import sys
-
 import uvicorn
+import webview
 
-# 启动服务
+from open_agent.application import app
+
+config = uvicorn.Config(app, host="localhost", port=8080, workers=1, access_log=False, log_level="info")
+server = uvicorn.Server(config)
+
+
+def run_uvicorn():
+    server.run()
+
+
+def close_uvicorn():
+    server.should_exit = True
+
+
 if __name__ == "__main__":
-    src_dir = str(pathlib.Path(__file__).parent)
-    project_dir = str(pathlib.Path(__file__).parent.parent)
-    os.chdir(project_dir)
-    if src_dir not in sys.path:
-        sys.path.append(src_dir)
-    uvicorn.run("open_agent.application:app", host="localhost", port=8080, workers=1, access_log=False)
+    window = webview.create_window('OpenAgent', "http://localhost:8080/", maximized=True)
+    window.events.closed += close_uvicorn
+    webview.start(run_uvicorn)
