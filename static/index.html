@@ -6,7 +6,7 @@
     <title>OpenAgent</title>
     <style>
         :root {
-            /* 工业极简冷峻风 - 调整色板，消除紫色与庸俗阴影，注重空间感与材质感 */
+            /* 工业极简冷峻风 */
             --charcoal-900: #121417;
             --charcoal-800: #1a1d21;
             --charcoal-700: #2c3138;
@@ -45,7 +45,7 @@
             color: var(--bg-canvas);
         }
 
-        /* 噪点纹理叠加，提升前端界面的高级质感 */
+        /* 噪点纹理叠加 */
         body::before {
             content: '';
             position: fixed;
@@ -86,7 +86,7 @@
             background: var(--slate-400);
         }
 
-        /* ----- 侧边栏 (极简紧凑排版) ----- */
+        /* ----- 侧边栏 ----- */
         .sidebar {
             width: 260px;
             background: var(--bg-surface);
@@ -173,7 +173,6 @@
             padding: 0 12px 16px;
         }
 
-        /* 历史记录，扁平紧凑 */
         .conversation-item {
             padding: 8px 10px;
             margin-bottom: 2px;
@@ -294,15 +293,10 @@
             letter-spacing: 0.5px;
         }
 
-        .header-nav-btn:hover {
+        .header-nav-btn:hover, .header-nav-btn.active {
             color: var(--charcoal-900);
             border-color: var(--border-hard);
             background: var(--bg-surface);
-        }
-
-        .header-nav-btn svg {
-            width: 14px;
-            height: 14px;
         }
 
         .header-conversation-info {
@@ -311,18 +305,22 @@
             font-family: var(--font-mono);
         }
 
-        .chat-container {
+        /* ----- 各视图通用容器 ----- */
+        .view-container {
             flex: 1;
             overflow-y: auto;
             padding: 32px 48px;
-            display: flex;
+            display: none;
             flex-direction: column;
             gap: 24px;
             scroll-behavior: smooth;
         }
 
-        /* ----- 消息区块设计 ----- */
+        .view-container.active {
+            display: flex;
+        }
 
+        /* ----- 消息历史 ----- */
         .message-time {
             font-size: 10px;
             font-family: var(--font-mono);
@@ -331,7 +329,6 @@
             text-align: right;
         }
 
-        /* 用户消息 */
         .user-message {
             align-self: flex-end;
             max-width: 70%;
@@ -349,7 +346,6 @@
             color: rgba(255, 255, 255, 0.4);
         }
 
-        /* 助手消息容器 */
         .assistant-message {
             align-self: flex-start;
             max-width: 80%;
@@ -359,7 +355,6 @@
             animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* 可折叠元素的共用样式 */
         details.think-details, details.tool-details {
             background: var(--bg-surface);
             border: 1px solid var(--border-hard);
@@ -415,7 +410,6 @@
             border-left: 2px solid transparent;
         }
 
-        /* 思考过程专属样式 (虚线边框) */
         details.think-details .content {
             border-left-color: var(--slate-300);
             border-left-style: dashed;
@@ -423,7 +417,6 @@
             background: var(--bg-canvas);
         }
 
-        /* 工具调用专属样式 (等宽字体) */
         details.tool-details .content {
             border-left-color: var(--charcoal-900);
             border-left-style: solid;
@@ -433,7 +426,6 @@
             overflow-x: auto;
         }
 
-        /* 最终回复内容 */
         .reply-content {
             font-size: 15px;
             line-height: 1.7;
@@ -441,13 +433,8 @@
             padding: 4px 0;
         }
 
-        /* Markdown 基本样式适配 */
         .reply-content p, .content p {
             margin-bottom: 0.8em;
-        }
-
-        .reply-content p:last-child, .content p:last-child {
-            margin-bottom: 0;
         }
 
         .reply-content pre, .content pre {
@@ -474,7 +461,6 @@
             padding: 0;
         }
 
-        /* 流式输出光标 */
         .streaming-active::after {
             content: '';
             display: inline-block;
@@ -486,35 +472,197 @@
             animation: blink 1s step-end infinite;
         }
 
-        @keyframes blink {
-            50% {
-                opacity: 0;
-            }
+        /* ----- Cron & Skills 卡片与内容排版 ----- */
+        .panel-view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--charcoal-900);
+            margin-bottom: 8px;
         }
 
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .panel-view-title {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
         }
 
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .info-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        /* ----- 底部输入区 ----- */
+        .info-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-hard);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: var(--transition-snap);
+            box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.01);
+        }
+
+        .info-card:hover {
+            border-color: var(--charcoal-900);
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.04);
+        }
+
+        .info-card-summary {
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            user-select: none;
+            background: #fafafa;
+        }
+
+        .info-card-main {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .info-card-arrow {
+            font-size: 12px;
+            color: var(--slate-300);
+            transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        .info-card[open] .info-card-arrow {
+            transform: rotate(90deg);
+            color: var(--charcoal-900);
+        }
+
+        .info-card-name {
+            font-weight: 700;
+            color: var(--charcoal-900);
+            font-family: var(--font-display);
+            min-width: 140px;
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .info-card-snippet {
+            color: var(--slate-400);
+            font-size: 13px;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .info-card-details {
+            padding: 20px;
+            background: var(--bg-panel);
+            border-top: 1px dashed var(--border-hard);
+            font-size: 13.5px;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 12px 16px;
+        }
+
+        .details-label {
+            font-family: var(--font-display);
+            font-weight: 700;
+            color: var(--slate-400);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            padding-top: 2px;
+        }
+
+        .details-value {
+            color: var(--charcoal-800);
+            word-break: break-all;
+        }
+
+        /* 大文本扩展容器块样式 - 全宽且支持 Markdown 自定义代码高亮风格 */
+        .details-block-container {
+            grid-column: 1 / -1;
+            margin-top: 8px;
+            border-top: 1px dashed var(--border-soft);
+            padding-top: 14px;
+        }
+
+        .details-block-container code, .details-block-container pre {
+            font-family: var(--font-mono);
+            background: var(--bg-surface);
+            padding: 12px 16px;
+            border: 1px solid var(--border-hard);
+            border-radius: var(--radius-sm);
+            display: block;
+            white-space: pre-wrap;
+            font-size: 12.5px;
+            color: var(--charcoal-800);
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        /* 添加定时任务表单结构升级 */
+        .add-cron-panel {
+            background: var(--bg-surface);
+            border: 1px dashed var(--charcoal-900);
+            padding: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-family: var(--font-display);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--charcoal-700);
+        }
+
+        .form-control {
+            padding: 8px 12px;
+            border: 1px solid var(--border-hard);
+            background: var(--bg-panel);
+            font-family: var(--font-body);
+            font-size: 13px;
+            outline: none;
+            border-radius: var(--radius-sm);
+        }
+
+        .form-control:focus {
+            border-color: var(--charcoal-900);
+        }
+
+        .form-control.mono {
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+
+        /* 底部输入区 */
         .input-wrapper {
             background: var(--bg-panel);
             padding: 20px 48px 32px;
@@ -614,6 +762,15 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-sm {
+            height: 32px;
+            padding: 0 12px;
+            font-size: 11px;
         }
 
         .send-button {
@@ -640,7 +797,6 @@
             background: #c92a2a;
         }
 
-        /* 空状态 */
         .empty-state {
             display: flex;
             flex-direction: column;
@@ -692,26 +848,12 @@
             font-family: var(--font-mono);
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        /* 隐藏原打字指示器，流式已有光标 */
-        .typing-indicator {
-            display: none;
-        }
-
-        /* Modal 通用样式精简 */
+        /* Modals & Overlays */
         .dir-modal-overlay, .confirm-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(240, 239, 233, 0.85); /* 半透明背景融入整体 */
+            background: rgba(240, 239, 233, 0.85);
             backdrop-filter: blur(8px);
             z-index: 2000;
         }
@@ -739,17 +881,6 @@
             align-items: center;
             text-align: center;
             margin-top: 30vh;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .dir-modal-header {
@@ -833,6 +964,54 @@
             background: var(--danger-color);
             color: white;
         }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -854,24 +1033,78 @@
 <div class="main-content">
     <div class="header">
         <div class="header-left">
-            <a class="header-nav-btn" href="/static/cron.html">Cron</a>
+            <button class="header-nav-btn active" id="navDialogBtn" onclick="switchView('dialog')">Dialog</button>
+            <button class="header-nav-btn" id="navCronBtn" onclick="switchView('cron')">Cron</button>
+            <button class="header-nav-btn" id="navSkillBtn" onclick="switchView('skill')">Skills</button>
             <a class="header-nav-btn" href="/static/mcp.html">MCP</a>
-            <a class="header-nav-btn" href="/static/skill.html">Skills</a>
             <a class="header-nav-btn" href="/static/config.html">Config</a>
         </div>
-        <span class="header-conversation-info" id="conversationInfo"></span>
+        <span class="header-conversation-info" id="conversationInfo">NEW TRACE</span>
     </div>
 
-    <div class="chat-container" id="chatContainer">
-        <div class="empty-state" id="emptyState">
-            <div class="empty-state-icon"><span>✦</span></div>
-            <div class="empty-state-title">Initialize Process</div>
-            <div class="empty-state-text">Start a new conversation or select an existing trace from the sidebar to continue.</div>
-            <div class="empty-state-hint">Press Enter to execute / Shift+Enter for newline</div>
+    <!-- 视图 CONTAINER 1: 智能会话区域 -->
+    <div class="view-container active" id="viewDialog">
+        <div class="chat-container" id="chatContainer" style="padding:0; flex:1;">
+            <div class="empty-state" id="emptyState">
+                <div class="empty-state-icon"><span>✦</span></div>
+                <div class="empty-state-title">Initialize Process</div>
+                <div class="empty-state-text">Start a new conversation or select an existing trace from the sidebar to continue.</div>
+                <div class="empty-state-hint">Press Enter to execute / Shift+Enter for newline</div>
+            </div>
         </div>
     </div>
 
-    <div class="input-wrapper">
+    <!-- 视图 CONTAINER 2: 定时任务管理 -->
+    <div class="view-container" id="viewCron">
+        <div class="panel-view-header">
+            <h2 class="panel-view-title">Scheduled Cron Processes</h2>
+            <button class="btn btn-sm send-button" onclick="toggleAddCronPanel()">+ Create Task</button>
+        </div>
+
+        <!-- 增补任务表单面板 (调整布局结构) -->
+        <div class="add-cron-panel" id="addCronPanel" style="display: none;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Task Name</label>
+                    <input type="text" id="cronName" class="form-control" placeholder="e.g. Daily Market Scraper">
+                </div>
+                <div class="form-group">
+                    <label>Working Directory</label>
+                    <input type="text" id="cronWorkDir" class="form-control" placeholder="e.g. /home/project/miniclaw">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Min</label><input type="text" id="cronMin" class="form-control mono" value="0"></div>
+                <div class="form-group"><label>Hour</label><input type="text" id="cronHour" class="form-control mono" value="9"></div>
+                <div class="form-group"><label>Day</label><input type="text" id="cronDay" class="form-control mono" value="*"></div>
+                <div class="form-group"><label>Month</label><input type="text" id="cronMonth" class="form-control mono" value="*"></div>
+                <div class="form-group"><label>Week</label><input type="text" id="cronWeek" class="form-control mono" value="*"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Execution Content / Script Context (Markdown Available)</label>
+                    <textarea id="cronContent" class="form-control mono" rows="5" style="resize: vertical; min-height: 100px;" placeholder="# Enter detailed script steps or model execution guidelines here..."></textarea>
+                </div>
+            </div>
+            <div class="form-row" style="justify-content: flex-end; margin-top: 4px; gap: 12px;">
+                <button class="btn btn-sm" style="background:transparent; border:1px solid var(--border-hard)" onclick="toggleAddCronPanel()">Cancel</button>
+                <button class="btn btn-sm send-button" onclick="submitCronTask()">Commit To Queue</button>
+            </div>
+        </div>
+
+        <div class="info-card-list" id="cronListContainer"></div>
+    </div>
+
+    <!-- 视图 CONTAINER 3: 系统核心技能 -->
+    <div class="view-container" id="viewSkill">
+        <div class="panel-view-header">
+            <h2 class="panel-view-title">Registered Agent Skills</h2>
+        </div>
+        <div class="info-card-list" id="skillListContainer"></div>
+    </div>
+
+    <!-- 输入层组件包裹器 -->
+    <div class="input-wrapper" id="globalInputWrapper">
         <button class="workspace-btn" id="workspaceBtn" onclick="selectWorkspace()" title="Set Directory Context">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
@@ -917,19 +1150,27 @@
     const emptyState = document.getElementById('emptyState');
     const manualPathInput = document.getElementById('manualPathInput');
 
+    const globalInputWrapper = document.getElementById('globalInputWrapper');
+    const cronListContainer = document.getElementById('cronListContainer');
+    const skillListContainer = document.getElementById('skillListContainer');
+    const addCronPanel = document.getElementById('addCronPanel');
+
+    messageInput.disabled = false;
+    sendButton.disabled = false;
+
     let currentConversationId = null;
     let isTyping = false;
     let currentEventSource = null;
     let currentWorkdir = '';
     let tempSelectedPath = "";
 
-    // UI状态变量
     let currentWrapper = null;
     let currentTargetNode = null;
 
-    // SVG Icons
     const FOLD_SVG = `<svg viewBox="0 0 24 24" class="fold-icon" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+    const ARROW_SVG = `<svg viewBox="0 0 24 24" class="info-card-arrow" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
 
+    // 页面加载完毕后初始化
     document.addEventListener('DOMContentLoaded', () => {
         messageInput.addEventListener('input', autoResize);
         messageInput.addEventListener('keydown', (e) => {
@@ -945,6 +1186,211 @@
         startNewChat();
     });
 
+    // 防止脚本注入
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // 文本转html格式 当前只处理换行
+    function formatMarkdown(text) {
+        return escapeHtml(text).replaceAll("\n", "<br>");
+    }
+
+    // ----- 核心架构：通用多视图切换引擎 -----
+    function switchView(viewName) {
+        document.querySelectorAll('.header-nav-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.view-container').forEach(view => view.classList.remove('active'));
+
+        if (viewName === 'dialog') {
+            document.getElementById('navDialogBtn').classList.add('active');
+            document.getElementById('viewDialog').classList.add('active');
+            globalInputWrapper.style.display = 'block';
+            if (currentConversationId) {
+                conversationInfo.textContent = `ID: ${currentConversationId}`;
+            } else {
+                conversationInfo.textContent = 'NEW TRACE';
+            }
+        } else if (viewName === 'cron') {
+            document.getElementById('navCronBtn').classList.add('active');
+            document.getElementById('viewCron').classList.add('active');
+            globalInputWrapper.style.display = 'none';
+            conversationInfo.textContent = 'CORE::SCHEDULE';
+            fetchCronTasks();
+        } else if (viewName === 'skill') {
+            document.getElementById('navSkillBtn').classList.add('active');
+            document.getElementById('viewSkill').classList.add('active');
+            globalInputWrapper.style.display = 'none';
+            conversationInfo.textContent = 'CORE::SKILLS';
+            fetchSkillData();
+        }
+    }
+
+    // ----- CRON 核心数据获取与展示 (详情重排版) -----
+    async function fetchCronTasks() {
+        cronListContainer.innerHTML = '<div style="padding:20px; text-align:center; font-family:var(--font-mono); color:var(--slate-400)">POLLING CRON REGISTRY...</div>';
+        try {
+            const response = await fetch('/schedule/list');
+            const tasks = await response.json();
+            cronListContainer.innerHTML = '';
+
+            if (tasks.length === 0) {
+                cronListContainer.innerHTML = '<div style="padding:30px; text-align:center; border:1px dashed var(--border-hard); color:var(--slate-400)">NO SCHEDULED CRON PROCESSES FOUND</div>';
+                return;
+            }
+
+            tasks.forEach(task => {
+                const card = document.createElement('div');
+                card.className = 'info-card';
+
+                card.innerHTML = `
+                    <div class="info-card-summary" onclick="toggleCardOpen(this.parentNode)">
+                        <div class="info-card-main">
+                            ${ARROW_SVG}
+                            <span class="info-card-name">${escapeHtml(task.name || 'Unnamed Task')}</span>
+                            <span class="info-card-snippet">${escapeHtml(task.content || '')}</span>
+                        </div>
+                        <button class="delete-btn" style="opacity:1;" onclick="event.stopPropagation(); removeCronTask('${task.id}')" title="Purge Cron">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                    <div class="info-card-details" style="display: none;">
+                        <div class="details-grid">
+                            <div class="details-label">Working Dir</div>
+                            <div class="details-value">${escapeHtml(task.work_dir || 'Inherited Environment')}</div>
+
+                            <div class="details-label">Next Fire</div>
+                            <div class="details-value" style="font-family:var(--font-mono); font-size:12px; color:var(--charcoal-900)">${escapeHtml(task.next_fire_time || 'Suspended')}</div>
+
+                            <div class="details-label">Trigger Spec</div>
+                            <div class="details-value"><code>${escapeHtml(task.trigger || '* * * * *')}</code></div>
+
+                            <!-- 赋予高伸缩性的长文本大块空间，并以 Markdown 排版渲染 -->
+                            <div class="details-block-container">
+                                <div class="details-label" style="margin-bottom: 6px;">Execution Content</div>
+                                <div class="reply-content">${formatMarkdown(task.content || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                cronListContainer.appendChild(card);
+            });
+        } catch (e) {
+            cronListContainer.innerHTML = '<div style="padding:20px; color:var(--danger-color)">FETCH FAILED: PIPELINE DISCONNECTED</div>';
+        }
+    }
+
+    function toggleAddCronPanel() {
+        addCronPanel.style.display = addCronPanel.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    async function submitCronTask() {
+        const name = document.getElementById('cronName').value.trim();
+        const content = document.getElementById('cronContent').value.trim();
+        const work_dir = document.getElementById('cronWorkDir').value.trim();
+
+        if (!name || !content || !work_dir) {
+            alert("REQUIRED FIELDS MISSING: NAME, CONTENT, AND WORKDIR MUST BE VALIDATED.");
+            return;
+        }
+
+        const payload = {
+            name, content, work_dir,
+            minute: document.getElementById('cronMin').value,
+            hour: document.getElementById('cronHour').value,
+            day: document.getElementById('cronDay').value,
+            month: document.getElementById('cronMonth').value,
+            day_of_week: document.getElementById('cronWeek').value,
+            second: '0'
+        };
+
+        try {
+            const response = await fetch('/schedule', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            if (response.ok) {
+                toggleAddCronPanel();
+                document.getElementById('cronName').value = '';
+                document.getElementById('cronContent').value = '';
+                document.getElementById('cronWorkDir').value = '';
+                fetchCronTasks();
+            }
+        } catch (e) {
+            alert("CREATION CRASHED: NETWORK FAULT");
+        }
+    }
+
+    async function removeCronTask(taskId) {
+        if (!confirm("ARE YOU SURE YOU WANT TO PURGE THIS CRON PIPELINE?")) return;
+        try {
+            const response = await fetch(`/schedule/${taskId}`, {method: 'DELETE'});
+            if (response.ok) fetchCronTasks();
+        } catch (e) {
+            alert("PURGE OPERATION FAILED");
+        }
+    }
+
+    // ----- SKILLS 核心数据获取与展示 -----
+    async function fetchSkillData() {
+        skillListContainer.innerHTML = '<div style="padding:20px; text-align:center; font-family:var(--font-mono); color:var(--slate-400)">POLLING SKILL EXTRACTIONS...</div>';
+        try {
+            const response = await fetch('/skill/list');
+            const skills = await response.json();
+            skillListContainer.innerHTML = '';
+
+            if (skills.length === 0) {
+                skillListContainer.innerHTML = '<div style="padding:30px; text-align:center; border:1px dashed var(--border-hard); color:var(--slate-400)">NO SKILLS EXTRACTED IN REGISTER</div>';
+                return;
+            }
+
+            skills.forEach(skill => {
+                const card = document.createElement('div');
+                card.className = 'info-card';
+                card.innerHTML = `
+                    <div class="info-card-summary" onclick="toggleCardOpen(this.parentNode)">
+                        <div class="info-card-main">
+                            ${ARROW_SVG}
+                            <span class="info-card-name">${escapeHtml(skill.name || 'Unnamed Skill')}</span>
+                            <span class="info-card-snippet">${escapeHtml(skill.description || '')}</span>
+                        </div>
+                    </div>
+                    <div class="info-card-details" style="display: none;">
+                        <div class="details-grid">
+                            <div class="details-label">Description</div>
+                            <div class="details-value">${escapeHtml(skill.description || 'No description assigned.')}</div>
+
+                            <div class="details-label">FS Path</div>
+                            <div class="details-value" style="font-family:var(--font-mono); font-size:12px; color:var(--slate-400)">${escapeHtml(skill.path || '')}</div>
+
+                            <div class="details-block-container">
+                                <div class="details-label" style="margin-bottom: 6px;">Source Manifest</div>
+                                <div class="reply-content">${formatMarkdown(skill.content || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                skillListContainer.appendChild(card);
+            });
+        } catch (e) {
+            skillListContainer.innerHTML = '<div style="padding:20px; color:var(--danger-color)">FETCH FAILED: AGENT REFUSED CONNECTION</div>';
+        }
+    }
+
+    function toggleCardOpen(cardElement) {
+        const details = cardElement.querySelector('.info-card-details');
+        if (cardElement.hasAttribute('open')) {
+            cardElement.removeAttribute('open');
+            details.style.display = 'none';
+        } else {
+            cardElement.setAttribute('open', '');
+            details.style.display = 'block';
+        }
+    }
+
+    // ----- 原系统网络底座与 SSE 分流控制器 -----
     async function loadDirList(path) {
         const dirListContainer = document.getElementById('dirList');
         const pathDisplay = document.getElementById('currentPathDisplay');
@@ -1030,10 +1476,12 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 `;
-                item.onclick = () => loadConversation(conversation.id);
+                item.onclick = () => {
+                    switchView('dialog');
+                    loadConversation(conversation.id);
+                };
                 conversationList.appendChild(item);
             });
-            // Update active state if exists
             if (currentConversationId) {
                 const items = conversationList.querySelectorAll('.conversation-item');
                 items.forEach(item => item.classList.toggle('active', String(item.dataset.id) === String(currentConversationId)));
@@ -1078,46 +1526,26 @@
         }
     }
 
-    /**
-     * 处理消息数组：
-     * 1. 如果 'user' 消息的 content 为列表（数组），将其 role 改为 'assistant'
-     * 2. 合并相邻的 'assistant' 消息的 content
-     *
-     * @param {Array} messages - 原始消息对象数组
-     * @returns {Array} - 处理后的消息数组
-     */
     function processMessages(messages) {
-        // 深拷贝以避免修改原始数据
         const msgs = JSON.parse(JSON.stringify(messages));
-
-        // 第一步：修改特定 user 的 role 为 assistant
         msgs.forEach(msg => {
             if (msg.role === 'user' && Array.isArray(msg.content)) {
                 msg.role = 'assistant';
             }
         });
-
-        // 第二步：合并相邻的 assistant 消息
         const mergedMessages = [];
-
         for (const msg of msgs) {
             if (mergedMessages.length === 0) {
                 mergedMessages.push(msg);
                 continue;
             }
-
             const lastMsg = mergedMessages[mergedMessages.length - 1];
-
-            // 判断是否为相邻的 assistant 消息
             if (lastMsg.role === 'assistant' && msg.role === 'assistant') {
-                // 两者 content 都是数组，直接拼接
                 lastMsg.content = lastMsg.content.concat(msg.content);
             } else {
-                // 角色不同，直接压入结果数组
                 mergedMessages.push(msg);
             }
         }
-
         return mergedMessages;
     }
 
@@ -1145,7 +1573,7 @@
                 </div>
             </div>
         `;
-        document.body.appendChild(overlay)
+        document.body.appendChild(overlay);
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) closeConfirmDialog();
         });
@@ -1170,6 +1598,7 @@
             items.forEach(item => item.classList.remove('active'));
         });
         initDefaultWorkspace();
+        switchView('dialog');
     }
 
     function enableInput() {
@@ -1189,25 +1618,6 @@
         }
     }
 
-    // 简单 Markdown 转 HTML
-    function formatMarkdown(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        let result = div.innerHTML;
-        result = result.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-        result = result.replace(/`([^`]+)`/g, '<code>$1</code>');
-        result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        result = result.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-        result = result.replace(/\n/g, '<br>');
-        return result;
-    }
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     function addUserMessage(content, time) {
         emptyState.style.display = 'none';
         const div = document.createElement('div');
@@ -1217,7 +1627,6 @@
         scrollToBottomIfAtBottom();
     }
 
-    // 为历史记录构建折叠结构的 Assistant 消息
     function addAssistantGroup(contentArray, time) {
         emptyState.style.display = 'none';
         const wrapper = document.createElement('div');
@@ -1250,32 +1659,23 @@
         sendButton.style.display = typing ? 'none' : 'flex';
     }
 
-    // 统一下游请求结束(或中断)时的状态还原及数据拉取操作
     async function handleStreamEnd() {
         setTyping(false);
         if (currentTargetNode) {
             currentTargetNode.classList.remove('streaming-active');
         }
-
         if (currentWrapper && !currentWrapper.querySelector('.message-time')) {
             currentWrapper.insertAdjacentHTML('beforeend', `<div class="message-time">${getCurrentTime()}</div>`);
         }
-
         currentWrapper = null;
         currentTargetNode = null;
-
-        // 重新加载 conversations 列表，这也会更新刚创建好的新对话
         await loadConversationList();
-
-        // 此时如果仍然不知道当前 conversationId（刚新建对话首次发送），则从列表中取最新的一条
         if (!currentConversationId) {
             const firstConversation = document.querySelector('.conversation-item');
             if (firstConversation) {
                 currentConversationId = firstConversation.dataset.id;
             }
         }
-
-        // 重新加载当前 conversation 页面内容，确保所有消息已按照服务端记录准确重绘
         if (currentConversationId) {
             await loadConversation(currentConversationId);
         }
@@ -1283,15 +1683,11 @@
 
     async function interruptConversation() {
         if (!currentEventSource) return;
-        // 不再发送 HTTP 请求，直接关闭 SSE
         currentEventSource.close();
         currentEventSource = null;
-
-        // 追加中断错误提示并触发重新加载
         if (currentWrapper && !currentWrapper.querySelector('.reply-content.error-hint')) {
             currentWrapper.insertAdjacentHTML('beforeend', `<div class="reply-content error-hint" style="color: var(--danger-color); font-size: 12px; font-family: var(--font-mono)">[CONNECTION INTERRUPTED BY USER]</div>`);
         }
-
         await handleStreamEnd();
     }
 
@@ -1304,7 +1700,6 @@
         autoResize();
         setTyping(true);
 
-        // 新版流式请求URL支持创建和更新
         let streamUrl = '/agent/stream';
         if (currentConversationId) {
             streamUrl = `/agent/stream/${currentConversationId}`;
@@ -1312,7 +1707,6 @@
         streamUrl += `?query=${encodeURIComponent(message)}&work_dir=${encodeURIComponent(currentWorkdir)}`;
 
         currentEventSource = new EventSource(streamUrl);
-
         currentWrapper = null;
         currentTargetNode = null;
         let currentRawText = '';
@@ -1321,7 +1715,6 @@
             const line = event.data;
             const data = JSON.parse(line);
 
-            // 初始化本次回复的容器
             if (!currentWrapper && data.type !== 'delta') {
                 currentWrapper = document.createElement('div');
                 currentWrapper.className = 'assistant-message';
@@ -1369,7 +1762,6 @@
             }
         };
 
-        // EventSource 遇到服务端正常关闭或断开时触发 onerror
         currentEventSource.onerror = async (e) => {
             if (currentEventSource) {
                 currentEventSource.close();
