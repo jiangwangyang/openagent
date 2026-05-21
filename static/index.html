@@ -472,7 +472,7 @@
             animation: blink 1s step-end infinite;
         }
 
-        /* ----- Cron & Skills 卡片与内容排版 ----- */
+        /* ----- 卡片公共排版引擎 ----- */
         .panel-view-header {
             display: flex;
             justify-content: space-between;
@@ -590,7 +590,6 @@
             word-break: break-all;
         }
 
-        /* 大文本扩展容器块样式 - 全宽且支持 Markdown 自定义代码高亮风格 */
         .details-block-container {
             grid-column: 1 / -1;
             margin-top: 8px;
@@ -612,8 +611,8 @@
             overflow-x: auto;
         }
 
-        /* 添加定时任务表单结构升级 */
-        .add-cron-panel {
+        /* 增补表单/配置层公共面板 */
+        .add-cron-panel, .config-section-card {
             background: var(--bg-surface);
             border: 1px dashed var(--charcoal-900);
             padding: 20px;
@@ -623,13 +622,22 @@
             gap: 12px;
         }
 
+        .config-section-card {
+            border-style: solid;
+            background: var(--bg-panel);
+            border-color: var(--border-hard);
+            position: relative;
+        }
+
         .form-row {
             display: flex;
             gap: 12px;
+            flex-wrap: wrap;
         }
 
         .form-group {
             flex: 1;
+            min-width: 150px;
             display: flex;
             flex-direction: column;
             gap: 4px;
@@ -651,6 +659,8 @@
             font-size: 13px;
             outline: none;
             border-radius: var(--radius-sm);
+            color: var(--charcoal-900);
+            width: 100%;
         }
 
         .form-control:focus {
@@ -660,6 +670,41 @@
         .form-control.mono {
             font-family: var(--font-mono);
             font-size: 12px;
+        }
+
+        select.form-control {
+            cursor: pointer;
+            height: 36px;
+        }
+
+        /* MCP 扩展样式 */
+        .mcp-tool-badge-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .mcp-tool-item {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-hard);
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            width: 100%;
+        }
+
+        .mcp-tool-name {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--charcoal-900);
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .mcp-tool-desc {
+            font-size: 12px;
+            color: var(--slate-400);
+            line-height: 1.4;
         }
 
         /* 底部输入区 */
@@ -773,9 +818,20 @@
             font-size: 11px;
         }
 
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-hard);
+            color: var(--charcoal-700);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--charcoal-900);
+            color: var(--charcoal-900);
+        }
+
         .send-button {
             background: var(--charcoal-900);
-            color: var(--bg-panel);
+            color: var(--bg-canvas);
         }
 
         .send-button:hover:not(:disabled) {
@@ -1036,13 +1092,13 @@
             <button class="header-nav-btn active" id="navDialogBtn" onclick="switchView('dialog')">Dialog</button>
             <button class="header-nav-btn" id="navCronBtn" onclick="switchView('cron')">Cron</button>
             <button class="header-nav-btn" id="navSkillBtn" onclick="switchView('skill')">Skills</button>
-            <a class="header-nav-btn" href="/static/mcp.html">MCP</a>
-            <a class="header-nav-btn" href="/static/config.html">Config</a>
+            <button class="header-nav-btn" id="navMcpBtn" onclick="switchView('mcp')">MCP</button>
+            <button class="header-nav-btn" id="navConfigBtn" onclick="switchView('config')">Config</button>
         </div>
         <span class="header-conversation-info" id="conversationInfo">NEW TRACE</span>
     </div>
 
-    <!-- 视图 CONTAINER 1: 智能会话区域 -->
+    <!-- 视图 1: 智能会话区域 -->
     <div class="view-container active" id="viewDialog">
         <div class="chat-container" id="chatContainer" style="padding:0; flex:1;">
             <div class="empty-state" id="emptyState">
@@ -1054,14 +1110,13 @@
         </div>
     </div>
 
-    <!-- 视图 CONTAINER 2: 定时任务管理 -->
+    <!-- 视图 2: 定时任务管理 -->
     <div class="view-container" id="viewCron">
         <div class="panel-view-header">
             <h2 class="panel-view-title">Scheduled Cron Processes</h2>
             <button class="btn btn-sm send-button" onclick="toggleAddCronPanel()">+ Create Task</button>
         </div>
 
-        <!-- 增补任务表单面板 (调整布局结构) -->
         <div class="add-cron-panel" id="addCronPanel" style="display: none;">
             <div class="form-row">
                 <div class="form-group">
@@ -1082,12 +1137,12 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Execution Content / Script Context (Markdown Available)</label>
-                    <textarea id="cronContent" class="form-control mono" rows="5" style="resize: vertical; min-height: 100px;" placeholder="# Enter detailed script steps or model execution guidelines here..."></textarea>
+                    <label>Execution Content / Script Context</label>
+                    <textarea id="cronContent" class="form-control mono" rows="5" style="resize: vertical; min-height: 100px;" placeholder="# Enter detailed script steps..."></textarea>
                 </div>
             </div>
             <div class="form-row" style="justify-content: flex-end; margin-top: 4px; gap: 12px;">
-                <button class="btn btn-sm" style="background:transparent; border:1px solid var(--border-hard)" onclick="toggleAddCronPanel()">Cancel</button>
+                <button class="btn btn-sm btn-secondary" onclick="toggleAddCronPanel()">Cancel</button>
                 <button class="btn btn-sm send-button" onclick="submitCronTask()">Commit To Queue</button>
             </div>
         </div>
@@ -1095,12 +1150,127 @@
         <div class="info-card-list" id="cronListContainer"></div>
     </div>
 
-    <!-- 视图 CONTAINER 3: 系统核心技能 -->
+    <!-- 视图 3: 系统核心技能 -->
     <div class="view-container" id="viewSkill">
         <div class="panel-view-header">
             <h2 class="panel-view-title">Registered Agent Skills</h2>
         </div>
         <div class="info-card-list" id="skillListContainer"></div>
+    </div>
+
+    <!-- 视图 4: MCP 服务架构生态映射 -->
+    <div class="view-container" id="viewMcp">
+        <div class="panel-view-header">
+            <h2 class="panel-view-title">Model Context Protocol Servers</h2>
+            <button class="btn btn-sm send-button" onclick="toggleAddMcpPanel()">+ Register Server</button>
+        </div>
+
+        <!-- MCP 新增注册面板 -->
+        <div class="add-cron-panel" id="addMcpPanel" style="display: none;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Server Unique Name</label>
+                    <input type="text" id="mcpKey" class="form-control mono" placeholder="e.g. vserver_wind_financial_data">
+                </div>
+                <div class="form-group">
+                    <label>Protocol Architecture Type</label>
+                    <select id="mcpType" class="form-control" onchange="adaptMcpFormFields()">
+                        <option value="streamable_http">streamable_http</option>
+                        <option value="sse">sse</option>
+                        <option value="stdio">stdio</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row" id="mcpNetworkRow">
+                <div class="form-group" style="flex: 2;">
+                    <label>Connection URL Endpoint</label>
+                    <input type="text" id="mcpUrl" class="form-control mono" placeholder="http://exp.wind.com.cn/.../mcp">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>HTTP Headers Context (JSON Format)</label>
+                    <input type="text" id="mcpHeaders" class="form-control mono" placeholder='{"wind.sessionid": "xx"}'>
+                </div>
+            </div>
+            <div class="form-row" id="mcpLocalRow" style="display: none;">
+                <div class="form-group">
+                    <label>Execute Command</label>
+                    <input type="text" id="mcpCommand" class="form-control mono" placeholder="python">
+                </div>
+                <div class="form-group">
+                    <label>Arguments (Comma Separated)</label>
+                    <input type="text" id="mcpArgs" class="form-control mono" placeholder="-m, mcp_server_package">
+                </div>
+            </div>
+            <div class="form-row" style="justify-content: flex-end; margin-top: 4px; gap: 12px;">
+                <button class="btn btn-sm btn-secondary" onclick="toggleAddMcpPanel()">Cancel</button>
+                <button class="btn btn-sm send-button" onclick="submitMcpServer()">Commit Registry</button>
+            </div>
+        </div>
+
+        <div class="info-card-list" id="mcpListContainer"></div>
+    </div>
+
+    <!-- 视图 5: 全局生产环境配置控制台 -->
+    <div class="view-container" id="viewConfig">
+        <div class="panel-view-header">
+            <h2 class="panel-view-title">System Runtime Configurations</h2>
+            <button class="btn btn-sm send-button" onclick="toggleAddProviderPanel()">+ Inject Provider</button>
+        </div>
+
+        <div id="configFormContainer" style="display: flex; flex-direction: column; gap: 24px;">
+            <!-- 骨干路由单元：核心模型路由 -->
+            <div class="config-section-card">
+                <!-- 优化调整：标题与保存按钮同一行，按钮放右上角 -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h3 class="panel-view-title" style="font-size: 14px; margin-bottom: 0;">Active Context Route</h3>
+                    <button class="btn btn-sm send-button" style="height: 32px;" onclick="saveActiveModelRoute()">Save Routing Choice</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Target Provider (Name)</label>
+                        <select id="configActiveProvider" class="form-control" onchange="syncModelDropdown()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Active Engine Model</label>
+                        <select id="configActiveModel" class="form-control"></select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 动态新增 Provider 表单控制卡 -->
+            <div class="add-cron-panel" id="addProviderPanel" style="display: none;">
+                <h3 class="panel-view-title" style="font-size: 12px; color: var(--charcoal-700); margin-bottom: 4px;">+ Add Model Provider</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Provider Unique Name</label>
+                        <input type="text" id="newProviderName" class="form-control" placeholder="e.g. deepseek">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label>Base URL Endpoint</label>
+                        <input type="text" id="newProviderUrl" class="form-control mono" placeholder="https://api.example.com/v1">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Secret Token (API Key)</label>
+                        <input type="password" id="newProviderKey" class="form-control mono" placeholder="••••••••••••">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Engine Clusters (Comma Separated Models)</label>
+                        <input type="text" id="newProviderModels" class="form-control mono" placeholder="model-1, model-2">
+                    </div>
+                </div>
+                <div class="form-row" style="justify-content: flex-end; margin-top: 4px; gap: 12px;">
+                    <button class="btn btn-sm btn-secondary" style="height: 36px;" onclick="toggleAddProviderPanel()">Cancel</button>
+                    <button class="btn btn-sm send-button" style="height: 36px;" onclick="submitNewProvider()">Inject Layer</button>
+                </div>
+            </div>
+
+            <!-- 异步动态注入的供应商清单 -->
+            <div class="info-card-list" id="providerConfigList"></div>
+        </div>
     </div>
 
     <!-- 输入层组件包裹器 -->
@@ -1153,7 +1323,10 @@
     const globalInputWrapper = document.getElementById('globalInputWrapper');
     const cronListContainer = document.getElementById('cronListContainer');
     const skillListContainer = document.getElementById('skillListContainer');
+    const mcpListContainer = document.getElementById('mcpListContainer');
     const addCronPanel = document.getElementById('addCronPanel');
+    const addMcpPanel = document.getElementById('addMcpPanel');
+    const addProviderPanel = document.getElementById('addProviderPanel');
 
     messageInput.disabled = false;
     sendButton.disabled = false;
@@ -1167,10 +1340,13 @@
     let currentWrapper = null;
     let currentTargetNode = null;
 
+    // 全局运行时状态缓存结构
+    let globalMcpCachedList = [];
+    let globalProvidersCachedList = [];
+
     const FOLD_SVG = `<svg viewBox="0 0 24 24" class="fold-icon" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
     const ARROW_SVG = `<svg viewBox="0 0 24 24" class="info-card-arrow" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
 
-    // 页面加载完毕后初始化
     document.addEventListener('DOMContentLoaded', () => {
         messageInput.addEventListener('input', autoResize);
         messageInput.addEventListener('keydown', (e) => {
@@ -1186,19 +1362,18 @@
         startNewChat();
     });
 
-    // 防止脚本注入
     function escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
-    // 文本转html格式 当前只处理换行
     function formatMarkdown(text) {
         return escapeHtml(text).replaceAll("\n", "<br>");
     }
 
-    // ----- 核心架构：通用多视图切换引擎 -----
+    // ----- 核心架构：视图导航引擎 -----
     function switchView(viewName) {
         document.querySelectorAll('.header-nav-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.view-container').forEach(view => view.classList.remove('active'));
@@ -1207,27 +1382,34 @@
             document.getElementById('navDialogBtn').classList.add('active');
             document.getElementById('viewDialog').classList.add('active');
             globalInputWrapper.style.display = 'block';
-            if (currentConversationId) {
-                conversationInfo.textContent = `ID: ${currentConversationId}`;
-            } else {
-                conversationInfo.textContent = 'NEW TRACE';
+            conversationInfo.textContent = currentConversationId ? `ID: ${currentConversationId}` : 'NEW TRACE';
+        } else {
+            globalInputWrapper.style.display = 'none';
+            if (viewName === 'cron') {
+                document.getElementById('navCronBtn').classList.add('active');
+                document.getElementById('viewCron').classList.add('active');
+                conversationInfo.textContent = 'CORE::SCHEDULE';
+                fetchCronTasks();
+            } else if (viewName === 'skill') {
+                document.getElementById('navSkillBtn').classList.add('active');
+                document.getElementById('viewSkill').classList.add('active');
+                conversationInfo.textContent = 'CORE::SKILLS';
+                fetchSkillData();
+            } else if (viewName === 'mcp') {
+                document.getElementById('navMcpBtn').classList.add('active');
+                document.getElementById('viewMcp').classList.add('active');
+                conversationInfo.textContent = 'CORE::MCP_ECOSYSTEM';
+                fetchMcpRegistry();
+            } else if (viewName === 'config') {
+                document.getElementById('navConfigBtn').classList.add('active');
+                document.getElementById('viewConfig').classList.add('active');
+                conversationInfo.textContent = 'CORE::CONFIG_CONSOLE';
+                fetchGlobalSettings();
             }
-        } else if (viewName === 'cron') {
-            document.getElementById('navCronBtn').classList.add('active');
-            document.getElementById('viewCron').classList.add('active');
-            globalInputWrapper.style.display = 'none';
-            conversationInfo.textContent = 'CORE::SCHEDULE';
-            fetchCronTasks();
-        } else if (viewName === 'skill') {
-            document.getElementById('navSkillBtn').classList.add('active');
-            document.getElementById('viewSkill').classList.add('active');
-            globalInputWrapper.style.display = 'none';
-            conversationInfo.textContent = 'CORE::SKILLS';
-            fetchSkillData();
         }
     }
 
-    // ----- CRON 核心数据获取与展示 (详情重排版) -----
+    // ----- CRON 核心引擎 -----
     async function fetchCronTasks() {
         cronListContainer.innerHTML = '<div style="padding:20px; text-align:center; font-family:var(--font-mono); color:var(--slate-400)">POLLING CRON REGISTRY...</div>';
         try {
@@ -1243,7 +1425,6 @@
             tasks.forEach(task => {
                 const card = document.createElement('div');
                 card.className = 'info-card';
-
                 card.innerHTML = `
                     <div class="info-card-summary" onclick="toggleCardOpen(this.parentNode)">
                         <div class="info-card-main">
@@ -1251,7 +1432,7 @@
                             <span class="info-card-name">${escapeHtml(task.name || 'Unnamed Task')}</span>
                             <span class="info-card-snippet">${escapeHtml(task.content || '')}</span>
                         </div>
-                        <button class="delete-btn" style="opacity:1;" onclick="event.stopPropagation(); removeCronTask('${task.id}')" title="Purge Cron">
+                        <button class="delete-btn" style="opacity:1;" onclick="event.stopPropagation(); removeCronTask('${task.id}')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
                     </div>
@@ -1259,14 +1440,10 @@
                         <div class="details-grid">
                             <div class="details-label">Working Dir</div>
                             <div class="details-value">${escapeHtml(task.work_dir || 'Inherited Environment')}</div>
-
                             <div class="details-label">Next Fire</div>
                             <div class="details-value" style="font-family:var(--font-mono); font-size:12px; color:var(--charcoal-900)">${escapeHtml(task.next_fire_time || 'Suspended')}</div>
-
                             <div class="details-label">Trigger Spec</div>
                             <div class="details-value"><code>${escapeHtml(task.trigger || '* * * * *')}</code></div>
-
-                            <!-- 赋予高伸缩性的长文本大块空间，并以 Markdown 排版渲染 -->
                             <div class="details-block-container">
                                 <div class="details-label" style="margin-bottom: 6px;">Execution Content</div>
                                 <div class="reply-content">${formatMarkdown(task.content || '')}</div>
@@ -1277,7 +1454,7 @@
                 cronListContainer.appendChild(card);
             });
         } catch (e) {
-            cronListContainer.innerHTML = '<div style="padding:20px; color:var(--danger-color)">FETCH FAILED: PIPELINE DISCONNECTED</div>';
+            cronListContainer.innerHTML = '<div style="padding:20px; color:var(--danger-color)">FETCH FAILED</div>';
         }
     }
 
@@ -1291,7 +1468,7 @@
         const work_dir = document.getElementById('cronWorkDir').value.trim();
 
         if (!name || !content || !work_dir) {
-            alert("REQUIRED FIELDS MISSING: NAME, CONTENT, AND WORKDIR MUST BE VALIDATED.");
+            alert("REQUIRED FIELDS MISSING.");
             return;
         }
 
@@ -1313,27 +1490,24 @@
             });
             if (response.ok) {
                 toggleAddCronPanel();
-                document.getElementById('cronName').value = '';
-                document.getElementById('cronContent').value = '';
-                document.getElementById('cronWorkDir').value = '';
                 fetchCronTasks();
             }
         } catch (e) {
-            alert("CREATION CRASHED: NETWORK FAULT");
+            alert("CREATION FAULT");
         }
     }
 
     async function removeCronTask(taskId) {
-        if (!confirm("ARE YOU SURE YOU WANT TO PURGE THIS CRON PIPELINE?")) return;
+        if (!confirm("PURGE THIS CRON PIPELINE?")) return;
         try {
             const response = await fetch(`/schedule/${taskId}`, {method: 'DELETE'});
             if (response.ok) fetchCronTasks();
         } catch (e) {
-            alert("PURGE OPERATION FAILED");
+            alert("PURGE FAILED");
         }
     }
 
-    // ----- SKILLS 核心数据获取与展示 -----
+    // ----- SKILLS 引擎 -----
     async function fetchSkillData() {
         skillListContainer.innerHTML = '<div style="padding:20px; text-align:center; font-family:var(--font-mono); color:var(--slate-400)">POLLING SKILL EXTRACTIONS...</div>';
         try {
@@ -1342,7 +1516,7 @@
             skillListContainer.innerHTML = '';
 
             if (skills.length === 0) {
-                skillListContainer.innerHTML = '<div style="padding:30px; text-align:center; border:1px dashed var(--border-hard); color:var(--slate-400)">NO SKILLS EXTRACTED IN REGISTER</div>';
+                skillListContainer.innerHTML = '<div style="padding:30px; text-align:center; border:1px dashed var(--border-hard); color:var(--slate-400)">NO SKILLS EXTRACTED</div>';
                 return;
             }
 
@@ -1361,10 +1535,8 @@
                         <div class="details-grid">
                             <div class="details-label">Description</div>
                             <div class="details-value">${escapeHtml(skill.description || 'No description assigned.')}</div>
-
                             <div class="details-label">FS Path</div>
                             <div class="details-value" style="font-family:var(--font-mono); font-size:12px; color:var(--slate-400)">${escapeHtml(skill.path || '')}</div>
-
                             <div class="details-block-container">
                                 <div class="details-label" style="margin-bottom: 6px;">Source Manifest</div>
                                 <div class="reply-content">${formatMarkdown(skill.content || '')}</div>
@@ -1375,7 +1547,443 @@
                 skillListContainer.appendChild(card);
             });
         } catch (e) {
-            skillListContainer.innerHTML = '<div style="padding:20px; color:var(--danger-color)">FETCH FAILED: AGENT REFUSED CONNECTION</div>';
+            skillListContainer.innerHTML = '<div style="padding:20px; color:var(--danger-color)">FETCH FAILED</div>';
+        }
+    }
+
+    // ----- MCP 模块层（对接 /setting/mcp/* 细粒度控制接口） -----
+    function toggleAddMcpPanel() {
+        addMcpPanel.style.display = addMcpPanel.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    function adaptMcpFormFields() {
+        const type = document.getElementById('mcpType').value;
+        document.getElementById('mcpNetworkRow').style.display = (type === 'stdio') ? 'none' : 'flex';
+        document.getElementById('mcpLocalRow').style.display = (type === 'stdio') ? 'flex' : 'none';
+    }
+
+    async function fetchMcpRegistry() {
+        mcpListContainer.innerHTML = '<div style="padding:20px; text-align:center; font-family:var(--font-mono); color:var(--slate-400)">RESOLVING MCP SERVER TOPOLOGY...</div>';
+        try {
+            const response = await fetch('/setting/mcp/list');
+            globalMcpCachedList = await response.json();
+            mcpListContainer.innerHTML = '';
+
+            if (globalMcpCachedList.length === 0) {
+                mcpListContainer.innerHTML = '<div style="padding:30px; text-align:center; border:1px dashed var(--border-hard); color:var(--slate-400)">NO REGISTERED MCP CONTEXTS</div>';
+                return;
+            }
+
+            globalMcpCachedList.forEach(server => {
+                const name = server.name;
+                const card = document.createElement('div');
+                card.className = 'info-card';
+                card.id = `mcp-card-${name}`;
+
+                const snippet = server.url || (server.command ? `${server.command} ${server.args?.join(' ')}` : 'Local Context');
+                const isStdio = server.type === 'stdio';
+
+                card.innerHTML = `
+                    <div class="info-card-summary" onclick="toggleCardOpen(this.parentNode)">
+                        <div class="info-card-main">
+                            ${ARROW_SVG}
+                            <span class="info-card-name" style="min-width:180px; max-width:280px;">${escapeHtml(name)}</span>
+                            <span class="info-card-snippet">${escapeHtml(snippet)}</span>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;" onclick="event.stopPropagation();">
+                            <button class="btn btn-sm send-button" style="height:28px; padding:0 8px; font-size:10px;" onclick="updateSingleMcp('${name}')">Apply</button>
+                            <button class="btn btn-sm send-button" style="height:28px;" onclick="testMcpServerTools('${name}')">Test Probe</button>
+                            <button class="delete-btn" style="opacity:1; padding:6px;" onclick="removeMcpServer('${name}')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="info-card-details" style="display: none;">
+                        <input type="hidden" id="mcp-type-${name}" value="${escapeHtml(server.type)}">
+                        <div class="details-grid">
+                            <div class="details-label">Protocol Type</div>
+                            <div class="details-value"><code style="background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:2px;">${escapeHtml(server.type)}</code></div>
+
+                            ${!isStdio ? `
+                                <div class="details-label">Target URL</div>
+                                <div class="details-value">
+                                    <input type="text" id="mcp-url-${name}" class="form-control mono" value="${escapeHtml(server.url || '')}">
+                                </div>
+                                <div class="details-label">HTTP Context Headers (JSON)</div>
+                                <div class="details-value">
+                                    <textarea id="mcp-headers-${name}" class="form-control mono" rows="3" style="resize: vertical; font-size:11px;">${escapeHtml(JSON.stringify(server.headers || {}, null, 2))}</textarea>
+                                </div>
+                            ` : `
+                                <div class="details-label">Command Execution</div>
+                                <div class="details-value">
+                                    <input type="text" id="mcp-command-${name}" class="form-control mono" value="${escapeHtml(server.command || '')}">
+                                </div>
+                                <div class="details-label">Arguments (Comma Separated)</div>
+                                <div class="details-value">
+                                    <input type="text" id="mcp-args-${name}" class="form-control mono" value="${escapeHtml(server.args?.join(', ') || '')}">
+                                </div>
+                            `}
+
+                            <div class="details-block-container" id="mcp-tools-zone-${name}" style="display:none;">
+                                <div class="details-label" style="margin-bottom: 6px;">Exposed Capabilities Registry</div>
+                                <div class="mcp-tool-badge-list" id="mcp-tools-list-${name}"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                mcpListContainer.appendChild(card);
+            });
+        } catch (e) {
+            mcpListContainer.innerHTML = '<div style="padding:20px; color:var(--danger-color)">TOPOLOGY CAPTURE CRASHED</div>';
+        }
+    }
+
+    async function submitMcpServer() {
+        const name = document.getElementById('mcpKey').value.trim();
+        const type = document.getElementById('mcpType').value;
+        if (!name) {
+            alert("SERVER UNIQUE NAME IS REQUIRED.");
+            return;
+        }
+
+        let bodyPayload = {type};
+        if (type === 'stdio') {
+            bodyPayload.command = document.getElementById('mcpCommand').value.trim();
+            const argsStr = document.getElementById('mcpArgs').value.trim();
+            bodyPayload.args = argsStr ? argsStr.split(',').map(a => a.trim()) : [];
+        } else {
+            bodyPayload.url = document.getElementById('mcpUrl').value.trim();
+            const headersStr = document.getElementById('mcpHeaders').value.trim();
+            if (headersStr) {
+                try {
+                    bodyPayload.headers = JSON.parse(headersStr);
+                } catch (e) {
+                    alert("HEADERS MUST BE A VALID JSON STRING.");
+                    return;
+                }
+            } else {
+                bodyPayload.headers = {};
+            }
+        }
+
+        try {
+            const response = await fetch(`/setting/mcp/${encodeURIComponent(name)}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(bodyPayload)
+            });
+            if (response.ok) {
+                toggleAddMcpPanel();
+                document.getElementById('mcpKey').value = '';
+                document.getElementById('mcpUrl').value = '';
+                document.getElementById('mcpHeaders').value = '';
+                document.getElementById('mcpCommand').value = '';
+                document.getElementById('mcpArgs').value = '';
+                fetchMcpRegistry();
+            }
+        } catch (e) {
+            alert("REGISTRATION REJECTED");
+        }
+    }
+
+    async function updateSingleMcp(name) {
+        const type = document.getElementById(`mcp-type-${name}`).value;
+        let bodyPayload = {type};
+
+        if (type === 'stdio') {
+            bodyPayload.command = document.getElementById(`mcp-command-${name}`).value.trim();
+            const argsStr = document.getElementById(`mcp-args-${name}`).value.trim();
+            bodyPayload.args = argsStr ? argsStr.split(',').map(a => a.trim()).filter(a => a) : [];
+        } else {
+            bodyPayload.url = document.getElementById(`mcp-url-${name}`).value.trim();
+            const headersStr = document.getElementById(`mcp-headers-${name}`).value.trim();
+            if (headersStr) {
+                try {
+                    bodyPayload.headers = JSON.parse(headersStr);
+                } catch (e) {
+                    alert("HEADERS MUST BE A VALID JSON STRING.");
+                    return;
+                }
+            } else {
+                bodyPayload.headers = {};
+            }
+        }
+
+        try {
+            const response = await fetch(`/setting/mcp/${encodeURIComponent(name)}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(bodyPayload)
+            });
+            if (response.ok) {
+                alert(`MCP SERVER [${name}] SYNCHRONIZED.`);
+                fetchMcpRegistry();
+            }
+        } catch (e) {
+            alert("SYNC CRASHED");
+        }
+    }
+
+    async function removeMcpServer(name) {
+        if (!confirm(`ARE YOU SURE YOU WANT TO PURGE MCP SERVER: [${name}]?`)) return;
+        try {
+            const response = await fetch(`/setting/mcp/${encodeURIComponent(name)}`, {method: 'DELETE'});
+            if (response.ok) fetchMcpRegistry();
+        } catch (e) {
+            alert("PURGE FAILURE");
+        }
+    }
+
+    async function testMcpServerTools(name) {
+        const targetServer = globalMcpCachedList.find(s => s.name === name);
+        if (!targetServer) return;
+
+        const card = document.getElementById(`mcp-card-${name}`);
+        const detailsZone = document.getElementById(`mcp-tools-zone-${name}`);
+        const listContainer = document.getElementById(`mcp-tools-list-${name}`);
+
+        if (!card.hasAttribute('open')) toggleCardOpen(card);
+        detailsZone.style.display = 'block';
+        listContainer.innerHTML = '<div style="font-family:var(--font-mono); font-size:12px; color:var(--slate-400)">CONNECTING & INITIALIZING CLIENT SESSION...</div>';
+
+        try {
+            const response = await fetch('/setting/mcp/tool/list', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(targetServer)
+            });
+            const tools = await response.json();
+            listContainer.innerHTML = '';
+            if (!tools || tools.length === 0) {
+                listContainer.innerHTML = '<div style="font-size:12px; color:var(--slate-400); font-style:italic;">CONNECTED SUCCESSFULLY. ZERO TOOLS EXPOSED.</div>';
+                return;
+            }
+            tools.forEach(tool => {
+                const item = document.createElement('div');
+                item.className = 'mcp-tool-item';
+                item.innerHTML = `
+                    <div class="mcp-tool-name">/tools::${escapeHtml(tool.name)}</div>
+                    <div class="mcp-tool-desc">${escapeHtml(tool.description || 'No instruction manifest provided.')}</div>
+                `;
+                listContainer.appendChild(item);
+            });
+        } catch (e) {
+            listContainer.innerHTML = `<div style="font-family:var(--font-mono); font-size:12px; color:var(--danger-color)">SESSION CRASHED: REFUSED CONNECTION</div>`;
+        }
+    }
+
+    // ----- CONFIG 全局生产环境配置（对接 /setting/model/* 细粒度核心接口） -----
+    function toggleAddProviderPanel() {
+        addProviderPanel.style.display = addProviderPanel.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    async function fetchGlobalSettings() {
+        const providerList = document.getElementById('providerConfigList');
+        providerList.innerHTML = '<div style="padding:20px; text-align:center; font-family:var(--font-mono); color:var(--slate-400)">LOADING CONFIGURATION IMAGES...</div>';
+
+        try {
+            // 1. 获取所有模型供应方列表
+            const pResponse = await fetch('/setting/model/provider/list');
+            globalProvidersCachedList = await pResponse.json();
+
+            // 2. 获取当前激活的模型和提供方选择路由
+            const sResponse = await fetch('/setting/model/select');
+            const selectRoute = await sResponse.json();
+
+            // 3. 构建核心路由下拉列表项
+            const activeProviderSelect = document.getElementById('configActiveProvider');
+            activeProviderSelect.innerHTML = '';
+
+            globalProvidersCachedList.forEach(provider => {
+                const opt = document.createElement('option');
+                opt.value = provider.name;
+                opt.textContent = provider.name;
+                if (provider.name === selectRoute.model_provider) opt.selected = true;
+                activeProviderSelect.appendChild(opt);
+            });
+
+            // 联动填充选中的具体模型
+            syncModelDropdown(selectRoute.model);
+
+            // 4. 循环渲染独立提供方的配置卡片实体
+            renderProvidersFormList();
+
+        } catch (e) {
+            providerList.innerHTML = '<div style="padding:20px; color:var(--danger-color)">SETTINGS DESERIALIZATION FAULT</div>';
+        }
+    }
+
+    function renderProvidersFormList() {
+        const providerList = document.getElementById('providerConfigList');
+        providerList.innerHTML = '';
+
+        globalProvidersCachedList.forEach(provider => {
+            const name = provider.name;
+            const card = document.createElement('div');
+            card.className = 'info-card';
+            card.id = `provider-card-${name}`;
+
+            const snippet = provider.base_url || 'Endpoint missing';
+
+            card.innerHTML = `
+                <div class="info-card-summary" onclick="toggleCardOpen(this.parentNode)">
+                    <div class="info-card-main">
+                        ${ARROW_SVG}
+                        <span class="info-card-name" style="min-width:180px; max-width:280px;">${escapeHtml(name)}</span>
+                        <span class="info-card-snippet">${escapeHtml(snippet)}</span>
+                    </div>
+                    <div style="display:flex; gap:12px; align-items:center;" onclick="event.stopPropagation();">
+                        <button class="btn btn-sm send-button" style="height:28px; padding:0 8px; font-size:10px;" onclick="updateSingleProvider('${name}')">Apply Cluster</button>
+                        <button class="delete-btn" style="opacity:1; color:var(--danger-color); font-size:11px; font-family:var(--font-mono); font-weight:700; padding:6px;" onclick="removeModelProvider('${name}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="info-card-details" style="display: none; background: var(--bg-surface); border-top: 1px solid var(--border-hard);">
+                    <div class="form-row" style="margin-bottom: 12px;">
+                        <div class="form-group" style="flex: 2;">
+                            <label style="font-family: var(--font-display); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--charcoal-700);">Base URL Endpoint</label>
+                            <input type="text" id="provider-url-${name}" class="form-control mono" value="${escapeHtml(provider.base_url || '')}">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label style="font-family: var(--font-display); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--charcoal-700);">Secret Token (API Key)</label>
+                            <input type="password" id="provider-key-${name}" class="form-control mono" value="${escapeHtml(provider.api_key || '')}" placeholder="••••••••••••">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label style="font-family: var(--font-display); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--charcoal-700);">Engine Clusters (Comma Separated Models)</label>
+                            <input type="text" id="provider-models-${name}" class="form-control mono" value="${escapeHtml(provider.models?.join(', ') || '')}">
+                        </div>
+                    </div>
+                </div>
+            `;
+            providerList.appendChild(card);
+        });
+    }
+
+    function syncModelDropdown(targetSelectedModel = null) {
+        const activeProviderSelect = document.getElementById('configActiveProvider');
+        const modelSelect = document.getElementById('configActiveModel');
+        modelSelect.innerHTML = '';
+
+        if (activeProviderSelect.options.length === 0) return;
+        const currentProviderName = activeProviderSelect.value;
+
+        const targetProvider = globalProvidersCachedList.find(p => p.name === currentProviderName);
+        if (targetProvider && targetProvider.models) {
+            targetProvider.models.forEach(modelStr => {
+                const opt = document.createElement('option');
+                opt.value = modelStr;
+                opt.textContent = modelStr;
+                if (targetSelectedModel && modelStr === targetSelectedModel) {
+                    opt.selected = true;
+                }
+                modelSelect.appendChild(opt);
+            });
+        }
+    }
+
+    async function submitNewProvider() {
+        const name = document.getElementById('newProviderName').value.trim();
+        if (!name) {
+            alert("PROVIDER NAME IS REQUIRED.");
+            return;
+        }
+
+        const urlValue = document.getElementById('newProviderUrl').value.trim();
+        const keyValue = document.getElementById('newProviderKey').value.trim();
+        const modelsValue = document.getElementById('newProviderModels').value.trim();
+
+        const bodyPayload = {
+            base_url: urlValue,
+            api_key: keyValue,
+            models: modelsValue ? modelsValue.split(',').map(m => m.trim()).filter(m => m) : []
+        };
+
+        try {
+            const response = await fetch(`/setting/model/provider/${encodeURIComponent(name)}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(bodyPayload)
+            });
+            if (response.ok) {
+                document.getElementById('newProviderName').value = '';
+                document.getElementById('newProviderUrl').value = '';
+                document.getElementById('newProviderKey').value = '';
+                document.getElementById('newProviderModels').value = '';
+                toggleAddProviderPanel();
+                fetchGlobalSettings();
+            }
+        } catch (e) {
+            alert("INJECTION FAULT");
+        }
+    }
+
+    async function updateSingleProvider(name) {
+        const urlValue = document.getElementById(`provider-url-${name}`).value.trim();
+        const keyValue = document.getElementById(`provider-key-${name}`).value.trim();
+        const modelsValue = document.getElementById(`provider-models-${name}`).value.trim();
+
+        const bodyPayload = {
+            base_url: urlValue,
+            api_key: keyValue,
+            models: modelsValue ? modelsValue.split(',').map(m => m.trim()).filter(m => m) : []
+        };
+
+        try {
+            const response = await fetch(`/setting/model/provider/${encodeURIComponent(name)}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(bodyPayload)
+            });
+            if (response.ok) {
+                alert(`PROVIDER CLUSTER [${name}] SYNCHRONIZED.`);
+                // 刷洗本地数据状态以更新可能调整的模型集群子集下拉项
+                const pResponse = await fetch('/setting/model/provider/list');
+                globalProvidersCachedList = await pResponse.json();
+                syncModelDropdown(document.getElementById('configActiveModel').value);
+            }
+        } catch (e) {
+            alert("SYNC CRASHED");
+        }
+    }
+
+    async function removeModelProvider(name) {
+        if (!confirm(`ARE YOU SURE YOU WANT TO PURGE MODEL PROVIDER: [${name}]?`)) return;
+        try {
+            const response = await fetch(`/setting/model/provider/${encodeURIComponent(name)}`, {method: 'DELETE'});
+            if (response.ok) fetchGlobalSettings();
+        } catch (e) {
+            alert("PURGE FAILURE");
+        }
+    }
+
+    async function saveActiveModelRoute() {
+        const providerSelect = document.getElementById('configActiveProvider');
+        const modelSelect = document.getElementById('configActiveModel');
+
+        if (!providerSelect.value || !modelSelect.value) {
+            alert("ROUTING PATH IS INCOMPLETE.");
+            return;
+        }
+
+        const bodyPayload = {
+            model_provider: providerSelect.value,
+            model: modelSelect.value
+        };
+
+        try {
+            const response = await fetch('/setting/model/select', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(bodyPayload)
+            });
+            if (response.ok) {
+                alert("GLOBAL CONTEXT ACTIVE ROUTE MOUNTED.");
+            }
+        } catch (e) {
+            alert("ROUTING COMMIT FAULT");
         }
     }
 
@@ -1390,7 +1998,7 @@
         }
     }
 
-    // ----- 原系统网络底座与 SSE 分流控制器 -----
+    // ----- 底层通用会话网络沙箱与状态处理 -----
     async function loadDirList(path) {
         const dirListContainer = document.getElementById('dirList');
         const pathDisplay = document.getElementById('currentPathDisplay');
@@ -1472,8 +2080,8 @@
                 item.innerHTML = `
                     <span class="conversation-item-icon">▪</span>
                     <span class="conversation-item-text">${conversation.title}</span>
-                    <button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteConversation('${conversation.id}')" title="Delete">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteConversation('${conversation.id}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 `;
                 item.onclick = () => {
@@ -1529,9 +2137,7 @@
     function processMessages(messages) {
         const msgs = JSON.parse(JSON.stringify(messages));
         msgs.forEach(msg => {
-            if (msg.role === 'user' && Array.isArray(msg.content)) {
-                msg.role = 'assistant';
-            }
+            if (msg.role === 'user' && Array.isArray(msg.content)) msg.role = 'assistant';
         });
         const mergedMessages = [];
         for (const msg of msgs) {
@@ -1583,6 +2189,13 @@
         const overlay = document.querySelector('.confirm-overlay');
         if (overlay) overlay.remove();
     }
+
+    // 强对齐卡片布局辅助补丁样式
+    const stylePatch = document.createElement('style');
+    stylePatch.innerHTML = `
+        .info-card-summary { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    `;
+    document.head.appendChild(stylePatch);
 
     function startNewChat() {
         currentConversationId = null;
@@ -1661,9 +2274,7 @@
 
     async function handleStreamEnd() {
         setTyping(false);
-        if (currentTargetNode) {
-            currentTargetNode.classList.remove('streaming-active');
-        }
+        if (currentTargetNode) currentTargetNode.classList.remove('streaming-active');
         if (currentWrapper && !currentWrapper.querySelector('.message-time')) {
             currentWrapper.insertAdjacentHTML('beforeend', `<div class="message-time">${getCurrentTime()}</div>`);
         }
@@ -1672,13 +2283,9 @@
         await loadConversationList();
         if (!currentConversationId) {
             const firstConversation = document.querySelector('.conversation-item');
-            if (firstConversation) {
-                currentConversationId = firstConversation.dataset.id;
-            }
+            if (firstConversation) currentConversationId = firstConversation.dataset.id;
         }
-        if (currentConversationId) {
-            await loadConversation(currentConversationId);
-        }
+        if (currentConversationId) await loadConversation(currentConversationId);
     }
 
     async function interruptConversation() {
@@ -1700,10 +2307,7 @@
         autoResize();
         setTyping(true);
 
-        let streamUrl = '/agent/stream';
-        if (currentConversationId) {
-            streamUrl = `/agent/stream/${currentConversationId}`;
-        }
+        let streamUrl = currentConversationId ? `/agent/stream/${currentConversationId}` : '/agent/stream';
         streamUrl += `?query=${encodeURIComponent(message)}&work_dir=${encodeURIComponent(currentWorkdir)}`;
 
         currentEventSource = new EventSource(streamUrl);
