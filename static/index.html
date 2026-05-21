@@ -64,6 +64,8 @@
             display: flex;
             overflow: hidden;
             font-size: 14px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-hard);
             -webkit-font-smoothing: antialiased;
         }
 
@@ -1310,6 +1312,9 @@
 </div>
 
 <script>
+    // ==========================================
+    // 1. 全局 DOM 节点缓存与核心状态管理
+    // ==========================================
     const chatContainer = document.getElementById('chatContainer');
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
@@ -1327,25 +1332,32 @@
     const addMcpPanel = document.getElementById('addMcpPanel');
     const addProviderPanel = document.getElementById('addProviderPanel');
 
+    // 初始化基础交互输入状态
     messageInput.disabled = false;
     sendButton.disabled = false;
 
+    // 运行时会话/流控状态变量
     let currentConversationId = null;
     let isTyping = false;
     let currentEventSource = null;
     let currentWorkdir = '';
     let tempSelectedPath = "";
 
+    // 动态渲染时定位的代理指针节点
     let currentWrapper = null;
     let currentTargetNode = null;
 
-    // 全局运行时状态缓存结构
+    // 全局运行时数据拓扑缓存
     let globalMcpCachedList = [];
     let globalProvidersCachedList = [];
 
+    // SVG 图标核心资产定义
     const FOLD_SVG = `<svg viewBox="0 0 24 24" class="fold-icon" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
     const ARROW_SVG = `<svg viewBox="0 0 24 24" class="info-card-arrow" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
 
+    // ==========================================
+    // 2. 生命周期与核心监听初始化
+    // ==========================================
     document.addEventListener('DOMContentLoaded', () => {
         messageInput.addEventListener('input', autoResize);
         messageInput.addEventListener('keydown', (e) => {
@@ -1357,10 +1369,15 @@
         manualPathInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') handleManualJump();
         });
+
+        // 装载会话历史并构建一个崭新的 Trace 环境
         loadConversationList();
         startNewChat();
     });
 
+    // ==========================================
+    // 3. 通用公共核心排版与基础工具引擎
+    // ==========================================
     function escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
@@ -1372,9 +1389,31 @@
         return escapeHtml(text).replaceAll("\n", "<br>");
     }
 
-    // ----- 核心组件：通用确认弹窗引擎 -----
+    function getCurrentTime() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    }
+
+    function scrollToBottomIfAtBottom() {
+        if (chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 100) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    }
+
+    function toggleCardOpen(cardElement) {
+        const details = cardElement.querySelector('.info-card-details');
+        if (cardElement.hasAttribute('open')) {
+            cardElement.removeAttribute('open');
+            details.style.display = 'none';
+        } else {
+            cardElement.setAttribute('open', '');
+            details.style.display = 'block';
+        }
+    }
+
+    // ----- 通用高级确认弹窗二次沉淀引擎 -----
     function showConfirmDialog({title, text, onConfirm}) {
-        closeConfirmDialog(); // 安全清理已有弹窗
+        closeConfirmDialog(); // 先行做边界清理安全机制
 
         const overlay = document.createElement('div');
         overlay.className = 'confirm-overlay';
@@ -1391,13 +1430,13 @@
         `;
         document.body.appendChild(overlay);
 
-        // 绑定确认执行回调
+        // 绑定动作触发回调函数
         document.getElementById('globalConfirmExecuteBtn').onclick = () => {
             if (typeof onConfirm === 'function') onConfirm();
             closeConfirmDialog();
         };
 
-        // 点击遮罩层关闭
+        // 点击背景遮罩层优雅退场
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) closeConfirmDialog();
         });
@@ -1408,7 +1447,9 @@
         if (overlay) overlay.remove();
     }
 
-    // ----- 核心架构：视图导航引擎 -----
+    // ==========================================
+    // 4. 核心骨干控制：视图路由导航引擎
+    // ==========================================
     function switchView(viewName) {
         document.querySelectorAll('.header-nav-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.view-container').forEach(view => view.classList.remove('active'));
@@ -1444,7 +1485,9 @@
         }
     }
 
-    // ----- CRON 核心引擎 -----
+    // ==========================================
+    // 5. CRON 核心排程自动化逻辑
+    // ==========================================
     async function fetchCronTasks() {
         cronListContainer.innerHTML = '<div style="padding:20px; text-align:center; font-family:var(--font-mono); color:var(--slate-400)">POLLING CRON REGISTRY...</div>';
         try {
@@ -1547,7 +1590,9 @@
         });
     }
 
-    // ----- SKILLS 引擎 -----
+    // ==========================================
+    // 6. SKILLS 核心原子能力提取层
+    // ==========================================
     async function fetchSkillData() {
         skillListContainer.innerHTML = '<div style="padding:20px; text-align:center; font-family:var(--font-mono); color:var(--slate-400)">POLLING SKILL EXTRACTIONS...</div>';
         try {
@@ -1591,7 +1636,9 @@
         }
     }
 
-    // ----- MCP 模块层 -----
+    // ==========================================
+    // 7. MCP (Model Context Protocol) 模块矩阵
+    // ==========================================
     function toggleAddMcpPanel() {
         addMcpPanel.style.display = addMcpPanel.style.display === 'none' ? 'flex' : 'none';
     }
@@ -1817,7 +1864,9 @@
         }
     }
 
-    // ----- CONFIG 全局控制台引擎 -----
+    // ==========================================
+    // 8. CONFIG 全局环境核心控制台引擎
+    // ==========================================
     function toggleAddProviderPanel() {
         addProviderPanel.style.display = addProviderPanel.style.display === 'none' ? 'flex' : 'none';
     }
@@ -2030,18 +2079,9 @@
         }
     }
 
-    function toggleCardOpen(cardElement) {
-        const details = cardElement.querySelector('.info-card-details');
-        if (cardElement.hasAttribute('open')) {
-            cardElement.removeAttribute('open');
-            details.style.display = 'none';
-        } else {
-            cardElement.setAttribute('open', '');
-            details.style.display = 'block';
-        }
-    }
-
-    // ----- 通用会话网络与状态处理 -----
+    // ==========================================
+    // 9. 工作空间 (CWD) 及目录层级导航引擎
+    // ==========================================
     async function loadDirList(path) {
         const dirListContainer = document.getElementById('dirList');
         const pathDisplay = document.getElementById('currentPathDisplay');
@@ -2069,6 +2109,7 @@
             const data = await response.json();
             if (data.current_path) updateWorkspaceUI(data.current_path);
         } catch (e) {
+            // 默认静默降级逻辑
         }
     }
 
@@ -2106,6 +2147,9 @@
         document.getElementById('dirModalOverlay').style.display = 'none';
     }
 
+    // ==========================================
+    // 10. 会话历史/交互流控与 SSE 核心网络模块
+    // ==========================================
     function autoResize() {
         messageInput.style.height = 'auto';
         messageInput.style.height = Math.min(messageInput.scrollHeight, 160) + 'px';
@@ -2138,6 +2182,7 @@
                 items.forEach(item => item.classList.toggle('active', String(item.dataset.id) === String(currentConversationId)));
             }
         } catch (e) {
+            // 静默处理错误
         }
     }
 
@@ -2179,9 +2224,12 @@
 
     function processMessages(messages) {
         const msgs = JSON.parse(JSON.stringify(messages));
+        // 将包装错误的 User Array 数据转换为 Assistant 角色进行合并
         msgs.forEach(msg => {
             if (msg.role === 'user' && Array.isArray(msg.content)) msg.role = 'assistant';
         });
+
+        // 顺序对齐合并相连的同类角色单体
         const mergedMessages = [];
         for (const msg of msgs) {
             if (mergedMessages.length === 0) {
@@ -2208,6 +2256,7 @@
                     if (String(currentConversationId) === String(conversationId)) startNewChat();
                     await loadConversationList();
                 } catch (e) {
+                    // 异常捕获
                 }
             }
         });
@@ -2234,17 +2283,6 @@
         messageInput.disabled = false;
         sendButton.disabled = false;
         messageInput.focus();
-    }
-
-    function getCurrentTime() {
-        const now = new Date();
-        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-    }
-
-    function scrollToBottomIfAtBottom() {
-        if (chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 100) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
     }
 
     function addUserMessage(content, time) {
