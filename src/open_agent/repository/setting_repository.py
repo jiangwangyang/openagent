@@ -31,7 +31,19 @@ async def init_settings():
             "base_url": "https://api.minimax.chat/anthropic",
             "api_key": os.getenv("MINIMAX_API_KEY", ""),
             "models": [
+                "MiniMax-M3",
                 "MiniMax-M2.7"
+            ]
+        }
+    # 增加 Zhipu
+    if "bigmodel" not in model_providers and os.getenv("BIGMODEL_API_KEY", ""):
+        model_providers["bigmodel"] = {
+            "base_url": "https://open.bigmodel.cn/api/anthropic",
+            "api_key": os.getenv("BIGMODEL_API_KEY", ""),
+            "models": [
+                "glm-5.1",
+                "glm-5",
+                "glm-5-turbo"
             ]
         }
     # 保存配置
