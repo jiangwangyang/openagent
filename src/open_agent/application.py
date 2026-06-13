@@ -1,4 +1,7 @@
 import logging
+import pathlib
+import sys
+import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -15,7 +18,17 @@ from open_agent.repository import setting_repository
 from open_agent.service import schedule_service
 from open_agent.tool import mcpcli_tool, skill_tool
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+LOGGING_FILE = str(pathlib.Path.home() / ".openagent" / "app.log")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler(LOGGING_FILE, mode="a", encoding="utf-8"),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+startup_event = threading.Event()
 
 
 @asynccontextmanager
@@ -28,6 +41,9 @@ async def lifespan(app: FastAPI):
     async with database.lifespan():
         async with schedule_service.lifespan():
             async with mcpcli_tool.lifespan():
+                # 启动完成
+                startup_event.set()
+                logging.info("Application started")
                 yield
 
 

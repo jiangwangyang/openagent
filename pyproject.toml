@@ -1,0 +1,41 @@
+[project]
+name = "open-agent"
+version = "0.1.0"
+description = "An uncompromised desktop AI Agent tool built exclusively for power users and geeks"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+authors = [{ name = "Wangyang Jiang", email = "jiangwangyang2000@163.com" }]
+dependencies = [
+    "uvicorn",
+    "fastapi",
+    "anyio",
+    "sqlalchemy",
+    "aiosqlite",
+    "anthropic",
+    "mcp",
+    "apscheduler>=4.0.0a1",
+]
+
+[project.scripts]
+openagent = "open_agent.main:main"
+
+[project.urls]
+Homepage = "https://github.com/jiangwangyang/open-agent"
+Documentation = "https://github.com/jiangwangyang/open-agent"
+Repository = "https://github.com/jiangwangyang/open-agent"
+Issues = "https://github.com/jiangwangyang/open-agent/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/open_agent"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/README.md",
+    "/LICENSE",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
