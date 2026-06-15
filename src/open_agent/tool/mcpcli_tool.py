@@ -1,9 +1,6 @@
-import argparse
-import io
 import json
 import logging
 from contextlib import asynccontextmanager, AsyncExitStack
-from contextlib import redirect_stdout, redirect_stderr
 
 from mcp import ClientSession, StdioServerParameters, Tool
 from mcp.client.sse import sse_client
@@ -12,19 +9,15 @@ from mcp.client.streamable_http import streamablehttp_client
 
 from open_agent.repository import setting_repository
 
-EXAMPLE = """
-# 列出服务
-mcpcli server list
-# 列出指定服务的工具
-mcpcli tool list <server_name>
-# 查看指定服务指定工具的参数格式信息
-mcpcli tool info <server_name> <tool_name>
-# 调用指定服务指定工具
-mcpcli tool call <server_name> <tool_name> [tool_json_args]
+HELP_CONTENT = """
+mcpcli server list                                                 # 列出所有MCP服务
+mcpcli server <server_name> tool list                              # 列出指定MCP服务的所有工具
+mcpcli server <server_name> tool <tool_name> info                  # 查看指定MCP服务指定工具的参数格式信息
+mcpcli server <server_name> tool <tool_name> call [tool_json_args] # 调用指定MCP服务指定工具
 """
 MCPCLI_TOOL = {
     "name": "mcpcli",
-    "description": "Query and call MCP (Model Context Protocol) tool",
+    "description": HELP_CONTENT,
     "input_schema": {
         "type": "object",
         "properties": {
@@ -33,7 +26,7 @@ MCPCLI_TOOL = {
                 "items": {
                     "type": "string"
                 },
-                "description": f"Argument list. Examples: \n{EXAMPLE}"
+                "description": f"Argument list."
             }
         },
         "required": []
@@ -96,90 +89,49 @@ async def lifespan():
         yield
 
 
-# 构建并返回 argparse 解析器
-def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="mcpcli",
-        description="MCP (Model Context Protocol) 核心调用逻辑"
-    )
-
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    # --- server 命令 ---
-    # mcpcli server list
-    server_parser = subparsers.add_parser("server")
-    server_subparsers = server_parser.add_subparsers(dest="server_command", required=True)
-    server_list_parser = server_subparsers.add_parser("list")
-
-    # --- tool 命令 ---
-    tool_parser = subparsers.add_parser("tool")
-    tool_subparsers = tool_parser.add_subparsers(dest="tool_command", required=True)
-
-    # mcpcli tool list <server_name>
-    tool_list_parser = tool_subparsers.add_parser("list")
-    tool_list_parser.add_argument("server_name")
-
-    # mcpcli tool info <server_name> <tool_name>
-    tool_info_parser = tool_subparsers.add_parser("info")
-    tool_info_parser.add_argument("server_name")
-    tool_info_parser.add_argument("tool_name")
-
-    # mcpcli tool call <server_name> <tool_name> [tool_json_args]
-    tool_call_parser = tool_subparsers.add_parser("call")
-    tool_call_parser.add_argument("server_name")
-    tool_call_parser.add_argument("tool_name")
-    tool_call_parser.add_argument("json_string", nargs="?", default=None)
-
-    return parser
-
-
 async def execute_mcpcli(tool_input: dict, work_dir: str) -> tuple[str, bool]:
     args: list[str] = tool_input.get("args", [])
-    args = ["-h"] if not args else args
-    parser = _build_parser()
+    args = ["mcpcli"] if not args else args
+    if args[0] == "mcpcli":
+        args = args[1:]
 
-    # 使用内存字符串缓冲区来拦截标准输出和标准错误
-    stdout_buf = io.StringIO()
-    stderr_buf = io.StringIO()
-    try:
-        with redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):
-            parsed_args = parser.parse_args(args)
-    except SystemExit as e:
-        # argparse 调用了 sys.exit()
-        # e.code 为 0 通常代表正常退出（如 -h --help），非 0 代表解析错误
-        if e.code == 0:
-            return stdout_buf.getvalue(), False
-        return stderr_buf.getvalue(), True
+    # 0. help
+    if "-h" in args or "--help" in args:
+        return HELP_CONTENT, False
 
-    if parsed_args.command == "server":
-        if parsed_args.server_command == "list":
-            result = [{"name": name, "description": description} for name, (description, _) in SERVER_TOOL_DICT.items()]
-            return json.dumps(result, ensure_ascii=False), False
-
-    elif parsed_args.command == "tool":
-        if parsed_args.tool_command == "list":
-            if not parsed_args.server_name in SERVER_TOOL_DICT:
-                return f"Unknown server {parsed_args.server_name}", True
-            result = [{"name": tool.name, "description": tool.description} for (session, tool) in SERVER_TOOL_DICT[parsed_args.server_name][1].values()]
-            return json.dumps(result, ensure_ascii=False), False
-
-        elif parsed_args.tool_command == "info":
-            if not parsed_args.server_name in SERVER_TOOL_DICT:
-                return f"Unknown server {parsed_args.server_name}", True
-            if not parsed_args.tool_name in SERVER_TOOL_DICT[parsed_args.server_name][1]:
-                return f"Unknown tool {parsed_args.tool_name}", True
-            tool = SERVER_TOOL_DICT[parsed_args.server_name][1][parsed_args.tool_name][1]
-            result = {"name": tool.name, "description": tool.description, "input_schema": tool.inputSchema}
-            return json.dumps(result, ensure_ascii=False), False
-
-        elif parsed_args.tool_command == "call":
-            if not parsed_args.server_name in SERVER_TOOL_DICT:
-                return f"Unknown server {parsed_args.server_name}", True
-            if not parsed_args.tool_name in SERVER_TOOL_DICT[parsed_args.server_name][1]:
-                return f"Unknown tool {parsed_args.tool_name}", True
-            session = SERVER_TOOL_DICT[parsed_args.server_name][1][parsed_args.tool_name][0]
-            tool_result = await session.call_tool(parsed_args.tool_name, json.loads(parsed_args.json_string) if parsed_args.json_string else {})
-            tool_content, is_error = str(tool_result.content), tool_result.isError
-            return tool_content, is_error
-
-    return "", True
+    # 1. mcpcli server list
+    if len(args) == 2 and args[0] == "server" and args[1] == "list":
+        result = [{"name": name, "description": description} for name, (description, _) in SERVER_TOOL_DICT.items()]
+        return json.dumps(result, ensure_ascii=False), False
+    # 2. mcpcli server <server_name> tool list
+    elif len(args) == 4 and args[0] == "server" and args[2] == "tool" and args[3] == "list":
+        server_name = args[1]
+        if not server_name in SERVER_TOOL_DICT:
+            return f"Unknown server {server_name}", True
+        result = [{"name": tool.name, "description": tool.description} for (session, tool) in SERVER_TOOL_DICT[server_name][1].values()]
+        return json.dumps(result, ensure_ascii=False), False
+    # 3. mcpcli server <server_name> tool <tool_name> info
+    elif len(args) == 5 and args[0] == "server" and args[2] == "tool" and args[4] == "info":
+        server_name = args[1]
+        tool_name = args[3]
+        if not server_name in SERVER_TOOL_DICT:
+            return f"Unknown server {server_name}", True
+        if not tool_name in SERVER_TOOL_DICT[server_name][1]:
+            return f"Unknown tool {tool_name}", True
+        tool = SERVER_TOOL_DICT[server_name][1][tool_name][1]
+        result = {"name": tool.name, "description": tool.description, "input_schema": tool.inputSchema}
+        return json.dumps(result, ensure_ascii=False), False
+    # 4. mcpcli server <server_name> tool <tool_name> call [tool_json_args]
+    elif len(args) == 6 and args[0] == "server" and args[2] == "tool" and args[4] == "call":
+        server_name = args[1]
+        tool_name = args[3]
+        json_string = args[5]
+        if not server_name in SERVER_TOOL_DICT:
+            return f"Unknown server {server_name}", True
+        if not tool_name in SERVER_TOOL_DICT[server_name][1]:
+            return f"Unknown tool {tool_name}", True
+        session = SERVER_TOOL_DICT[server_name][1][tool_name][0]
+        tool_result = await session.call_tool(tool_name, json.loads(json_string) if json_string else {})
+        tool_content, is_error = str(tool_result.content), tool_result.isError
+        return tool_content, is_error
+    return "未知命令，输入'mcpcli -h'或'mcpcli --help'查看用法", True
