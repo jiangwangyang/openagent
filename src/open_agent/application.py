@@ -16,7 +16,7 @@ from open_agent.api.static_api import router as static_router
 from open_agent.repository import database
 from open_agent.repository import setting_repository
 from open_agent.service import schedule_service
-from open_agent.tool import mcpcli_tool, skill_tool
+from open_agent.tool import mcp_tool, skill_tool
 
 LOGGING_FILE = str(pathlib.Path.home() / ".openagent" / "app.log")
 logging.basicConfig(
@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI):
     # 数据库/调度器/mcp 生命周期管理
     async with database.lifespan():
         async with schedule_service.lifespan():
-            async with mcpcli_tool.lifespan():
+            async with mcp_tool.lifespan():
                 # 启动完成
                 startup_event.set()
                 logging.info("Application started")

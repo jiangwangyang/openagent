@@ -1,8 +1,8 @@
-from open_agent.tool import shell_tool, mcpcli_tool, file_tool, skill_tool
+from open_agent.tool import shell_tool, mcp_tool, file_tool, skill_tool
 
 
 def get_anthropic_tools() -> list[dict]:
-    return file_tool.get_anthropic_tools() + shell_tool.get_anthropic_tools() + skill_tool.get_anthropic_tools() + mcpcli_tool.get_anthropic_tools()
+    return file_tool.get_anthropic_tools() + shell_tool.get_anthropic_tools() + skill_tool.get_anthropic_tools() + mcp_tool.get_anthropic_tools()
 
 
 async def execute_tool(name: str, tool_input: dict, work_dir: str) -> tuple[str, bool]:
@@ -18,7 +18,7 @@ async def execute_tool(name: str, tool_input: dict, work_dir: str) -> tuple[str,
         if name == "list_skill":
             return await skill_tool.list_skill(tool_input, work_dir)
         if name == "mcpcli":
-            return await mcpcli_tool.execute_mcpcli(tool_input, work_dir)
+            return await mcp_tool.execute_mcpcli(tool_input, work_dir)
     except Exception as e:
         return f"{e}", True
     return f"Unknown tool: {name}", True
