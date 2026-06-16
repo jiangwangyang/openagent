@@ -1,5 +1,3 @@
-from contextlib import AsyncExitStack
-
 from fastapi import APIRouter
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
@@ -14,20 +12,22 @@ router = APIRouter()
 @router.post("/tool/list")
 async def list_mcp_tool(body: dict):
     proto_type = body.get("type")
-    async with AsyncExitStack() as stack:
-        if proto_type == "streamable_http":
-            transport = await stack.enter_async_context(streamablehttp_client(body["url"], body.get("headers")))
-        elif proto_type == "sse":
-            transport = await stack.enter_async_context(sse_client(body["url"], body.get("headers")))
-        elif proto_type == "stdio":
-            transport = await stack.enter_async_context(stdio_client(StdioServerParameters(command=body["command"], args=body["args"])))
-        else:
-            raise ValueError(f"Unknown proto type: {proto_type}")
-        read, write = transport[:2]
-        session = await stack.enter_async_context(ClientSession(read, write))
-        await session.initialize()
-        tools_resp = await session.list_tools()
-        return [dict(tool) for tool in tools_resp.tools]
+    # 创建客户端
+    if proto_type == "streamable_http":
+        client = streamablehttp_client(body["url"], body.get("headers"))
+    elif proto_type == "sse":
+        client = sse_client(body["url"], body.get("headers"))
+    elif proto_type == "stdio":
+        client = stdio_client(StdioServerParameters(command=body["command"], args=body["args"]))
+    else:
+        raise ValueError(f"Unknown proto type: {proto_type}")
+    # 建立连接
+    async with client as streams:
+        read, write = streams[:2]
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            tools_resp = await session.list_tools()
+            return [dict(tool) for tool in tools_resp.tools]
 
 
 @router.get("/list")

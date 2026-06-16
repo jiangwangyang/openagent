@@ -41,51 +41,46 @@ def get_anthropic_tools() -> list[dict]:
 
 
 @asynccontextmanager
-async def _register_mcp_client(name: str, description: str, proto_type: str, **kwargs):
-    async with AsyncExitStack() as stack:
-        # 创建客户端
-        if proto_type == "streamable_http":
-            transport = await stack.enter_async_context(streamablehttp_client(kwargs["url"], kwargs.get("headers")))
-        elif proto_type == "sse":
-            transport = await stack.enter_async_context(sse_client(kwargs["url"], kwargs.get("headers")))
-        elif proto_type == "stdio":
-            transport = await stack.enter_async_context(stdio_client(StdioServerParameters(command=kwargs["command"], args=kwargs["args"])))
-        else:
-            raise ValueError(f"Unknown proto type: {proto_type}")
-        read, write = transport[:2]
-        session = await stack.enter_async_context(ClientSession(read, write))
-        await session.initialize()
-        # 获取工具列表
-        tools_resp = await session.list_tools()
-        SERVER_TOOL_DICT[name] = (description, {tool.name: (session, tool) for tool in tools_resp.tools})
-        logging.info(f"MCP client {name} started, having {len(tools_resp.tools)} tools: {json.dumps(tools_resp.tools, ensure_ascii=False, default=lambda o: o.__dict__)}")
-        # 等待
-        yield
-        # 结束
-        SERVER_TOOL_DICT.pop(name)
-        logging.info(f"MCP client {name} stopped")
+async def _register_mcp_client(name: str, description: str, proto_type: str, arg_dict: dict):
+    # 创建客户端
+    if proto_type == "streamable_http":
+        client = streamablehttp_client(arg_dict["url"], arg_dict.get("headers"))
+    elif proto_type == "sse":
+        client = sse_client(arg_dict["url"], arg_dict.get("headers"))
+    elif proto_type == "stdio":
+        client = stdio_client(StdioServerParameters(command=arg_dict["command"], args=arg_dict["args"]))
+    else:
+        raise ValueError(f"Unknown proto type: {proto_type}")
+    # 建立连接
+    async with client as streams:
+        read, write = streams[:2]
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            # 获取工具列表
+            tools_resp = await session.list_tools()
+            SERVER_TOOL_DICT[name] = (description, {tool.name: (session, tool) for tool in tools_resp.tools})
+            logging.info(f"MCP client {name} started, having {len(tools_resp.tools)} tools: {json.dumps([{"name": tool.name, "description": tool.description} for tool in tools_resp.tools], ensure_ascii=False)}")
+            # 等待
+            yield
+            # 结束
+            SERVER_TOOL_DICT.pop(name)
+            logging.info(f"MCP client {name} stopped")
 
 
 @asynccontextmanager
 async def lifespan():
     settings = await setting_repository.get_settings()
     mcp_servers = settings.get("mcp_servers", {})
+    mcp_clients = [_register_mcp_client(name, server_dict.get("description", ""), server_dict.get("type", ""), server_dict) for name, server_dict in mcp_servers.items()]
     async with AsyncExitStack() as stack:
-        for name, server in mcp_servers.items():
+        for client in mcp_clients:
             try:
-                if server.get("type") == "streamable_http":
-                    await stack.enter_async_context(_register_mcp_client(name, server.get("description", ""), "streamable_http", url=server.get("url"), headers=server.get("headers")))
-                elif server.get("type") == "sse":
-                    await stack.enter_async_context(_register_mcp_client(name, server.get("description", ""), "sse", url=server.get("url"), headers=server.get("headers")))
-                elif server.get("type") == "stdio":
-                    await stack.enter_async_context(_register_mcp_client(name, server.get("description", ""), "stdio", command=server.get("command"), args=server.get("args")))
-                else:
-                    logging.warning(f"Unknown MCP server type: {server.get("type")}")
+                await stack.enter_async_context(client)
             except Exception as e:
                 if hasattr(e, "exceptions"):
-                    logging.error(f"Error registering {name}: {e.exceptions}")
+                    logging.error(f"Error registering mcp client: {e.exceptions}")
                 else:
-                    logging.error(f"Error registering {name}: {e}")
+                    logging.error(f"Error registering mcp client: {e}")
         yield
 
 
