@@ -3,21 +3,24 @@ import pathlib
 import sys
 import threading
 from contextlib import asynccontextmanager
+from importlib.resources import files
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from open_agent.api.agent_api import router as agent_router
+from open_agent.api.app_api import router as app_router
 from open_agent.api.conversation_api import router as conversation_router
 from open_agent.api.mcp_api import router as mcp_router
 from open_agent.api.model_api import router as model_router
 from open_agent.api.schedule_api import router as schedule_router
 from open_agent.api.skill_api import router as skill_router
-from open_agent.api.static_api import router as static_router
 from open_agent.repository import database
 from open_agent.repository import setting_repository
 from open_agent.service import schedule_service
 from open_agent.tool import mcp_tool, skill_tool
 
+STATIC_PATH = files("open_agent") / "static"
 LOGGING_FILE = str(pathlib.Path.home() / ".openagent" / "app.log")
 logging.basicConfig(
     level=logging.INFO,
@@ -48,7 +51,8 @@ async def lifespan(app: FastAPI):
 
 
 app: FastAPI = FastAPI(lifespan=lifespan)
-app.include_router(static_router, prefix="")
+app.mount("/static", StaticFiles(directory=str(STATIC_PATH)), name="static")
+app.include_router(app_router, prefix="")
 app.include_router(agent_router, prefix="/agent")
 app.include_router(conversation_router, prefix="/conversation")
 app.include_router(schedule_router, prefix="/schedule")
