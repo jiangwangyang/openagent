@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from open_agent.repository import setting_repository
+from openagent.repository import setting_repository
 
 router = APIRouter()
 

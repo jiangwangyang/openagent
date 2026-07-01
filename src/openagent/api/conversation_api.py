@@ -2,8 +2,8 @@ import json
 
 from fastapi import APIRouter, Path, HTTPException
 
-from open_agent.repository import conversation_repository
-from open_agent.repository.database import ConversationEntity
+from openagent.repository import conversation_repository
+from openagent.repository.database import ConversationEntity
 
 router = APIRouter()
 

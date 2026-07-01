@@ -8,19 +8,19 @@ from importlib.resources import files
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from open_agent.api.agent_api import router as agent_router
-from open_agent.api.app_api import router as app_router
-from open_agent.api.conversation_api import router as conversation_router
-from open_agent.api.mcp_api import router as mcp_router
-from open_agent.api.model_api import router as model_router
-from open_agent.api.schedule_api import router as schedule_router
-from open_agent.api.skill_api import router as skill_router
-from open_agent.repository import database
-from open_agent.repository import setting_repository
-from open_agent.service import schedule_service
-from open_agent.tool import mcp_tool, skill_tool
+from openagent.api.agent_api import router as agent_router
+from openagent.api.app_api import router as app_router
+from openagent.api.conversation_api import router as conversation_router
+from openagent.api.mcp_api import router as mcp_router
+from openagent.api.model_api import router as model_router
+from openagent.api.schedule_api import router as schedule_router
+from openagent.api.skill_api import router as skill_router
+from openagent.repository import database
+from openagent.repository import setting_repository
+from openagent.service import schedule_service
+from openagent.tool import mcp_tool, skill_tool
 
-STATIC_PATH = files("open_agent") / "static"
+STATIC_PATH = files("openagent") / "static"
 LOGGING_FILE = str(pathlib.Path.home() / ".openagent" / "app.log")
 logging.basicConfig(
     level=logging.INFO,

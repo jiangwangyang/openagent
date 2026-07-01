@@ -4,7 +4,7 @@ from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
 
-from open_agent.repository import setting_repository
+from openagent.repository import setting_repository
 
 router = APIRouter()
 

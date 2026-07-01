@@ -1,5 +1,5 @@
 [project]
-name = "open-agent"
+name = "openagent"
 version = "0.1.0"
 description = "An uncompromised desktop AI Agent tool built exclusively for power users and geeks"
 readme = "README.md"
@@ -14,20 +14,20 @@ dependencies = [
     "aiosqlite",
     "anthropic",
     "mcp",
-    "apscheduler>=4.0.0a1",
+    "apscheduler>=4.0.0a6",
 ]
 
 [project.scripts]
-openagent = "open_agent.main:main"
+openagent = "openagent.main:main"
 
 [project.urls]
-Homepage = "https://github.com/jiangwangyang/open-agent"
-Documentation = "https://github.com/jiangwangyang/open-agent"
-Repository = "https://github.com/jiangwangyang/open-agent"
-Issues = "https://github.com/jiangwangyang/open-agent/issues"
+Homepage = "https://github.com/jiangwangyang/openagent"
+Documentation = "https://github.com/jiangwangyang/openagent"
+Repository = "https://github.com/jiangwangyang/openagent"
+Issues = "https://github.com/jiangwangyang/openagent/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/open_agent"]
+packages = ["src/openagent"]
 
 [tool.hatch.build.targets.sdist]
 include = [

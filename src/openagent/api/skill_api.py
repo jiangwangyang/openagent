@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from open_agent.tool import skill_tool
+from openagent.tool import skill_tool
 
 router = APIRouter()
 

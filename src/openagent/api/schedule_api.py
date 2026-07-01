@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Path, Body
 
-from open_agent.service import schedule_service
+from openagent.service import schedule_service
 
 router = APIRouter()
 

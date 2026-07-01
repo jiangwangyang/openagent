@@ -1,9 +1,9 @@
 import sys
 
-from open_agent.tool import command_tool
-from open_agent.tool import file_tool
-from open_agent.tool import mcp_tool
-from open_agent.tool import skill_tool
+from openagent.tool import command_tool
+from openagent.tool import file_tool
+from openagent.tool import mcp_tool
+from openagent.tool import skill_tool
 
 DESCRIPTION = f"""
 Execute commands on the {sys.platform} system.

@@ -7,7 +7,7 @@ from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
 
-from open_agent.repository import setting_repository
+from openagent.repository import setting_repository
 
 # {servername: (serverdescription, {toolname: (session, tool)})}
 SERVER_TOOL_DICT: dict[str, tuple[str, dict[str, tuple[ClientSession, Tool]]]] = {}

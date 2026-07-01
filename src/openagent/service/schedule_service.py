@@ -5,8 +5,8 @@ from apscheduler import AsyncScheduler
 from apscheduler.datastores.sqlalchemy import SQLAlchemyDataStore
 from apscheduler.triggers.cron import CronTrigger
 
-from open_agent.repository import database
-from open_agent.service import agent_service
+from openagent.repository import database
+from openagent.service import agent_service
 
 async_scheduler = AsyncScheduler(SQLAlchemyDataStore(database.async_engine))
 

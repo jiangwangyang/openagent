@@ -4,9 +4,9 @@ import anyio
 from anthropic import AsyncAnthropic, AsyncStream
 from anthropic.types.raw_message_stream_event import RawMessageStreamEvent
 
-from open_agent.repository import conversation_repository
-from open_agent.repository import setting_repository
-from open_agent.service import tool_service
+from openagent.repository import conversation_repository
+from openagent.repository import setting_repository
+from openagent.service import tool_service
 
 
 async def agent(conversation_id: int, query: str, work_dir: str):

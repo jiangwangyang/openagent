@@ -4,8 +4,8 @@ from datetime import datetime
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 
-from open_agent.repository.database import ConversationEntity, MessageEntity, ExchangeEntity
-from open_agent.repository.database import async_session
+from openagent.repository.database import ConversationEntity, MessageEntity, ExchangeEntity
+from openagent.repository.database import async_session
 
 
 async def get_conversations() -> list[ConversationEntity]:

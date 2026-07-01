@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, Body
 from fastapi.responses import StreamingResponse
 
-from open_agent.service import agent_service
+from openagent.service import agent_service
 
 router = APIRouter()
 
