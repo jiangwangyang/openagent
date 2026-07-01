@@ -6,7 +6,7 @@ from openagent.tool import mcp_tool
 from openagent.tool import skill_tool
 
 DESCRIPTION = f"""
-Execute commands on the {sys.platform} system.
+Execute commands on {sys.platform} system.{" PowerShell commands are recommended." if sys.platform.startswith("win") else ""}
 The following are built-in system commands, and note that the commands should be entered as an array:
 file read <file_path>                                           # Read file content.
 file write <file_path> <content>                                # Write content to a file. Creates the file if it doesn't exist, overwrites if it does.
