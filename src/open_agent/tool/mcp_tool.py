@@ -9,35 +9,8 @@ from mcp.client.streamable_http import streamablehttp_client
 
 from open_agent.repository import setting_repository
 
-HELP_CONTENT = """
-mcpcli server list                                                 # 列出所有MCP服务
-mcpcli server <server_name> tool list                              # 列出指定MCP服务的所有工具
-mcpcli server <server_name> tool <tool_name> info                  # 查看指定MCP服务指定工具的参数格式信息
-mcpcli server <server_name> tool <tool_name> call [tool_json_args] # 调用指定MCP服务指定工具
-"""
-MCPCLI_TOOL = {
-    "name": "mcpcli",
-    "description": HELP_CONTENT,
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "args": {
-                "type": "array",
-                "items": {
-                    "type": "string"
-                },
-                "description": f"Argument list."
-            }
-        },
-        "required": []
-    }
-}
 # {servername: (serverdescription, {toolname: (session, tool)})}
 SERVER_TOOL_DICT: dict[str, tuple[str, dict[str, tuple[ClientSession, Tool]]]] = {}
-
-
-def get_anthropic_tools() -> list[dict]:
-    return [MCPCLI_TOOL] if SERVER_TOOL_DICT else []
 
 
 @asynccontextmanager
@@ -84,31 +57,21 @@ async def lifespan():
         yield
 
 
-async def execute_mcpcli(tool_input: dict, work_dir: str) -> tuple[str, bool]:
-    args: list[str] = tool_input.get("args", [])
-    args = ["mcpcli"] if not args else args
-    if args[0] == "mcpcli":
-        args = args[1:]
-
-    # 0. help
-    if "-h" in args or "--help" in args:
-        return HELP_CONTENT, False
-
-    # 1. mcpcli server list
-    if len(args) == 2 and args[0] == "server" and args[1] == "list":
+async def execute(args: list[str], work_dir: str) -> tuple[str, bool]:
+    # 1. mcp server list
+    if len(args) == 3 and args[0] == "mcp" and args[1] == "server" and args[2] == "list":
         result = [{"name": name, "description": description} for name, (description, _) in SERVER_TOOL_DICT.items()]
         return json.dumps(result, ensure_ascii=False), False
-    # 2. mcpcli server <server_name> tool list
-    elif len(args) == 4 and args[0] == "server" and args[2] == "tool" and args[3] == "list":
-        server_name = args[1]
+    # 2. mcp server <server_name> tool list
+    elif len(args) == 5 and args[0] == "mcp" and args[1] == "server" and args[3] == "tool" and args[4] == "list":
+        server_name = args[2]
         if not server_name in SERVER_TOOL_DICT:
             return f"Unknown server {server_name}", True
         result = [{"name": tool.name, "description": tool.description} for (session, tool) in SERVER_TOOL_DICT[server_name][1].values()]
         return json.dumps(result, ensure_ascii=False), False
-    # 3. mcpcli server <server_name> tool <tool_name> info
-    elif len(args) == 5 and args[0] == "server" and args[2] == "tool" and args[4] == "info":
-        server_name = args[1]
-        tool_name = args[3]
+    # 3. mcp server <server_name> tool <tool_name> info
+    elif len(args) == 6 and args[0] == "mcp" and args[1] == "server" and args[3] == "tool" and args[5] == "info":
+        server_name, tool_name = args[2], args[4]
         if not server_name in SERVER_TOOL_DICT:
             return f"Unknown server {server_name}", True
         if not tool_name in SERVER_TOOL_DICT[server_name][1]:
@@ -116,11 +79,9 @@ async def execute_mcpcli(tool_input: dict, work_dir: str) -> tuple[str, bool]:
         tool = SERVER_TOOL_DICT[server_name][1][tool_name][1]
         result = {"name": tool.name, "description": tool.description, "input_schema": tool.inputSchema}
         return json.dumps(result, ensure_ascii=False), False
-    # 4. mcpcli server <server_name> tool <tool_name> call [tool_json_args]
-    elif len(args) == 6 and args[0] == "server" and args[2] == "tool" and args[4] == "call":
-        server_name = args[1]
-        tool_name = args[3]
-        json_string = args[5]
+    # 4. mcp server <server_name> tool <tool_name> call [tool_json_args]
+    elif len(args) == 7 and args[0] == "mcp" and args[1] == "server" and args[3] == "tool" and args[5] == "call":
+        server_name, tool_name, json_string = args[2], args[4], args[6]
         if not server_name in SERVER_TOOL_DICT:
             return f"Unknown server {server_name}", True
         if not tool_name in SERVER_TOOL_DICT[server_name][1]:
@@ -129,4 +90,4 @@ async def execute_mcpcli(tool_input: dict, work_dir: str) -> tuple[str, bool]:
         tool_result = await session.call_tool(tool_name, json.loads(json_string) if json_string else {})
         tool_content, is_error = str(tool_result.content), tool_result.isError
         return tool_content, is_error
-    return "未知命令，输入'mcpcli -h'或'mcpcli --help'查看用法", True
+    return "未知命令", True

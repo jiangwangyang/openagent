@@ -3,15 +3,6 @@ import pathlib
 
 import anyio
 
-LIST_SKILL_TOOL = {
-    "name": "list_skill",
-    "description": "List Skill",
-    "input_schema": {
-        "type": "object",
-        "properties": {},
-        "required": []
-    }
-}
 SKILLS_DIR_LIST = [str(pathlib.Path.home() / ".openagent" / "skills"), str(pathlib.Path.home() / ".agents" / "skills")]
 SKILLS = []
 
@@ -48,10 +39,9 @@ async def init_skills():
                 loaded.add(name)
 
 
-def get_anthropic_tools() -> list[dict]:
-    return [LIST_SKILL_TOOL] if SKILLS else []
-
-
-async def list_skill(tool_input: dict, work_dir: str) -> tuple[str, bool]:
-    tool_content = json.dumps([{"name": s["name"], "description": s["description"], "path": s["path"]} for s in SKILLS], ensure_ascii=False)
-    return tool_content, False
+async def execute(args: list[str], work_dir: str) -> tuple[str, bool]:
+    # 1. skill list
+    if len(args) == 2 and args[0] == "skill" and args[1] == "list":
+        tool_content = json.dumps([{"name": s["name"], "description": s["description"], "path": s["path"]} for s in SKILLS], ensure_ascii=False)
+        return tool_content, False
+    return "未知命令", True
