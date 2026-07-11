@@ -1,12 +1,25 @@
 import json
 import pathlib
+from typing import TypedDict
 
 import anyio
 
+
+# Skill数据结构
+class SkillInfo(TypedDict):
+    name: str
+    description: str
+    path: str
+    content: str
+
+
+# Skill读取目录
 SKILLS_DIR_LIST = [str(pathlib.Path.home() / ".openagent" / "skills"), str(pathlib.Path.home() / ".agents" / "skills")]
-SKILLS = []
+# 存储所有的skill信息
+SKILLS: list[SkillInfo] = []
 
 
+# 初始化所有skill信息
 async def init_skills():
     loaded = set()
     # 遍历技能目录
@@ -35,10 +48,11 @@ async def init_skills():
                     description = line[12:].strip()
             if name == skill_dir.name:
                 content = text.split("---\n", 2)[2].strip()
-                SKILLS.append({"name": name, "description": description, "path": str(await skill_file.resolve()), "content": content})
+                SKILLS.append(SkillInfo(name=name, description=description, path=str(await skill_file.resolve()), content=content))
                 loaded.add(name)
 
 
+# 执行
 async def execute(args: list[str], work_dir: str) -> tuple[str, bool]:
     # 1. skill list
     if len(args) == 2 and args[0] == "skill" and args[1] == "list":
