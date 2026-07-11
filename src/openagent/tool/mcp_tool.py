@@ -1,16 +1,26 @@
 import json
 import logging
 from contextlib import asynccontextmanager, AsyncExitStack
+from typing import TypedDict
 
-from mcp import ClientSession, StdioServerParameters, Tool
+from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
+from mcp.types import TextContent, Tool, ListToolsResult
 
 from openagent.repository import setting_repository
 
-# {servername: (serverdescription, {toolname: (session, tool)})}
-SERVER_TOOL_DICT: dict[str, tuple[str, dict[str, tuple[ClientSession, Tool]]]] = {}
+
+# MCP数据结构
+class McpServerInfo(TypedDict):
+    description: str
+    session: ClientSession
+    tool_dict: dict[str, Tool]
+
+
+# 存储所有的MCP信息
+MCP_DICT: dict[str, McpServerInfo] = {}
 
 
 @asynccontextmanager
@@ -28,15 +38,15 @@ async def _register_mcp_client(name: str, description: str, proto_type: str, arg
     async with client as streams:
         read, write = streams[:2]
         async with ClientSession(read, write) as session:
-            await session.initialize()
+            _ = await session.initialize()
             # 获取工具列表
-            tools_resp = await session.list_tools()
-            SERVER_TOOL_DICT[name] = (description, {tool.name: (session, tool) for tool in tools_resp.tools})
-            logging.info(f"MCP client {name} started, having {len(tools_resp.tools)} tools: {json.dumps([{"name": tool.name, "description": tool.description} for tool in tools_resp.tools], ensure_ascii=False)}")
+            list_tools_result: ListToolsResult = await session.list_tools()
+            MCP_DICT[name] = McpServerInfo(description=description, session=session, tool_dict={tool.name: tool for tool in list_tools_result.tools})
+            logging.info(f"MCP client {name} started, having {len(list_tools_result.tools)} tools: {json.dumps([{"name": tool.name, "description": tool.description} for tool in list_tools_result.tools], ensure_ascii=False)}")
             # 等待
             yield
             # 结束
-            SERVER_TOOL_DICT.pop(name)
+            MCP_DICT.pop(name)
             logging.info(f"MCP client {name} stopped")
 
 
@@ -57,37 +67,40 @@ async def lifespan():
         yield
 
 
+# 执行
 async def execute(args: list[str], work_dir: str) -> tuple[str, bool]:
     # 1. mcp server list
     if len(args) == 3 and args[0] == "mcp" and args[1] == "server" and args[2] == "list":
-        result = [{"name": name, "description": description} for name, (description, _) in SERVER_TOOL_DICT.items()]
+        result = [{"name": name, "description": mcp_server_info["description"]} for name, mcp_server_info in MCP_DICT.items()]
         return json.dumps(result, ensure_ascii=False), False
     # 2. mcp server <server_name> tool list
     elif len(args) == 5 and args[0] == "mcp" and args[1] == "server" and args[3] == "tool" and args[4] == "list":
         server_name = args[2]
-        if not server_name in SERVER_TOOL_DICT:
+        if not server_name in MCP_DICT:
             return f"Unknown server {server_name}", True
-        result = [{"name": tool.name, "description": tool.description} for (session, tool) in SERVER_TOOL_DICT[server_name][1].values()]
+        result = [{"name": tool.name, "description": tool.description} for tool in MCP_DICT[server_name]["tool_dict"].values()]
         return json.dumps(result, ensure_ascii=False), False
     # 3. mcp server <server_name> tool <tool_name> info
     elif len(args) == 6 and args[0] == "mcp" and args[1] == "server" and args[3] == "tool" and args[5] == "info":
         server_name, tool_name = args[2], args[4]
-        if not server_name in SERVER_TOOL_DICT:
+        if not server_name in MCP_DICT:
             return f"Unknown server {server_name}", True
-        if not tool_name in SERVER_TOOL_DICT[server_name][1]:
+        if not tool_name in MCP_DICT[server_name]["tool_dict"]:
             return f"Unknown tool {tool_name}", True
-        tool = SERVER_TOOL_DICT[server_name][1][tool_name][1]
+        tool = MCP_DICT[server_name]["tool_dict"][tool_name]
         result = {"name": tool.name, "description": tool.description, "input_schema": tool.inputSchema}
         return json.dumps(result, ensure_ascii=False), False
     # 4. mcp server <server_name> tool <tool_name> call [tool_json_args]
     elif len(args) == 7 and args[0] == "mcp" and args[1] == "server" and args[3] == "tool" and args[5] == "call":
         server_name, tool_name, json_string = args[2], args[4], args[6]
-        if not server_name in SERVER_TOOL_DICT:
+        if not server_name in MCP_DICT:
             return f"Unknown server {server_name}", True
-        if not tool_name in SERVER_TOOL_DICT[server_name][1]:
+        if not tool_name in MCP_DICT[server_name]["tool_dict"]:
             return f"Unknown tool {tool_name}", True
-        session = SERVER_TOOL_DICT[server_name][1][tool_name][0]
+        session = MCP_DICT[server_name]["session"]
         tool_result = await session.call_tool(tool_name, json.loads(json_string) if json_string else {})
-        tool_content, is_error = str(tool_result.content), tool_result.isError
+        tool_content_list = [content.text if isinstance(content, TextContent) else content.type for content in tool_result.content]
+        tool_content = tool_content_list[0] if len(tool_content_list) == 1 else json.dumps(tool_content_list, ensure_ascii=False)
+        is_error = tool_result.isError
         return tool_content, is_error
     return "未知命令", True
