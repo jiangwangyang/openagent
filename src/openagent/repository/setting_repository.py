@@ -21,8 +21,33 @@ async def init_settings():
             "base_url": "https://api.deepseek.com/anthropic",
             "api_key": os.getenv("DEEPSEEK_API_KEY", ""),
             "models": [
+                "deepseek-v4-pro",
                 "deepseek-v4-flash",
-                "deepseek-v4-pro"
+            ]
+        }
+    # 增加 Zhipu
+    if "bigmodel" not in model_providers and os.getenv("BIGMODEL_API_KEY", ""):
+        model_providers["bigmodel"] = {
+            "base_url": "https://open.bigmodel.cn/api/anthropic",
+            "api_key": os.getenv("BIGMODEL_API_KEY", ""),
+            "models": [
+                "glm-5.2",
+                "glm-5.1",
+                "glm-5-turbo",
+                "glm-5",
+                "glm-4.7",
+                "glm-4.7-flash",
+            ]
+        }
+    # 增加 Kimi
+    if "moonshot" not in model_providers and os.getenv("MOONSHOT_API_KEY", ""):
+        model_providers["moonshot"] = {
+            "base_url": "https://api.moonshot.cn/anthropic",
+            "api_key": os.getenv("MOONSHOT_API_KEY", ""),
+            "models": [
+                "kimi-k2.7-code",
+                "kimi-k2.6",
+                "kimi-k2.5",
             ]
         }
     # 增加 MiniMax
@@ -32,18 +57,7 @@ async def init_settings():
             "api_key": os.getenv("MINIMAX_API_KEY", ""),
             "models": [
                 "MiniMax-M3",
-                "MiniMax-M2.7"
-            ]
-        }
-    # 增加 Zhipu
-    if "bigmodel" not in model_providers and os.getenv("BIGMODEL_API_KEY", ""):
-        model_providers["bigmodel"] = {
-            "base_url": "https://open.bigmodel.cn/api/anthropic",
-            "api_key": os.getenv("BIGMODEL_API_KEY", ""),
-            "models": [
-                "glm-5.1",
-                "glm-5",
-                "glm-5-turbo"
+                "MiniMax-M2.7",
             ]
         }
     # 保存配置
