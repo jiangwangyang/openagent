@@ -31,7 +31,7 @@ async def agent(conversation_id: int, query: str, work_dir: str):
 
     while True:
         # 1. 发送 anthropic 请求
-        response: AsyncStream[RawMessageStreamEvent] = await anthropic_client.messages.create(messages=messages, tools=tools, system=system_prompt, model=model, max_tokens=1 << 14, stream=True)
+        response: AsyncStream[RawMessageStreamEvent] = await anthropic_client.messages.create(messages=messages, tools=tools, system=system_prompt, model=model, max_tokens=4096, stream=True)
         model_block_list = []
         async for event in response:
             if event.type == "content_block_start":
