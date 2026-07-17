@@ -1,5 +1,6 @@
 import json
 import logging
+import shlex
 from contextlib import asynccontextmanager, AsyncExitStack
 from typing import TypedDict
 
@@ -68,7 +69,8 @@ async def lifespan():
 
 
 # 执行
-async def execute(args: list[str], work_dir: str) -> tuple[str, bool]:
+async def execute(command: str, work_dir: str) -> tuple[str, bool]:
+    args: list[str] = shlex.split(command)
     # 1. mcp server list
     if len(args) == 3 and args[0] == "mcp" and args[1] == "server" and args[2] == "list":
         result = [{"name": name, "description": mcp_server_info["description"]} for name, mcp_server_info in MCP_DICT.items()]

@@ -1,7 +1,10 @@
+import shlex
+
 import anyio
 
 
-async def execute(args: list[str], work_dir: str) -> tuple[str, bool]:
+async def execute(command: str, work_dir: str) -> tuple[str, bool]:
+    args: list[str] = shlex.split(command)
     # 1. file read <file_path>
     if len(args) == 3 and args[0] == "file" and args[1] == "read":
         file_path = args[2]
