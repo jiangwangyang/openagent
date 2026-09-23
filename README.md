@@ -1,3 +1,11 @@
+# Archived
+
+This repository is no longer maintained and has been archived for provenance.
+
+Please follow the new project, [openagents](https://github.com/jiangwangyang/openagents).
+
+[https://github.com/jiangwangyang/openagents](https://github.com/jiangwangyang/openagents)
+
 # Open Agent
 
 > **An uncompromised desktop AI Agent tool built exclusively for power users and geeks.**
